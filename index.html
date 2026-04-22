@@ -1,217 +1,305 @@
 <!DOCTYPE html>
 <html lang="ja">
 <head>
+<!-- ═══════════════════════════════════════
+     SEO / OGP メタタグ（要件3）
+═══════════════════════════════════════ -->
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>CardRadar — トレカ最安値レーダー</title>
+
+<title>CardRadar — ポケモン・ワンピースカード最安値比較サイト</title>
+<meta name="description"   content="ポケモンカード・ワンピースカード・遊戯王など人気トレカの最安値をメルカリ・ヤフオク・大手ショップから横断比較。価格アラート機能付き。">
+<meta name="keywords"      content="ポケモンカード,ワンピースカード,遊戯王,トレカ,最安値,価格比較,メルカリ,ヤフオク">
+<meta name="author"        content="CardRadar">
+<meta name="robots"        content="index, follow">
+<link rel="canonical"      href="https://public-azure-six.vercel.app/">
+
+<!-- OGP（SNSシェア用） -->
+<meta property="og:type"        content="website">
+<meta property="og:url"         content="https://public-azure-six.vercel.app/">
+<meta property="og:title"       content="CardRadar — トレカ最安値レーダー">
+<meta property="og:description" content="ポケモン・ワンピース・遊戯王カードの最安値をリアルタイム比較。メルカリ・ヤフオク・大手ショップを横断チェック。">
+<meta property="og:image"       content="https://public-azure-six.vercel.app/ogp.png">
+<meta name="twitter:card"       content="summary_large_image">
+<meta name="twitter:title"      content="CardRadar — トレカ最安値レーダー">
+<meta name="twitter:description"content="ポケモン・ワンピース・遊戯王カードの最安値をリアルタイム比較！">
+
+<!-- 構造化データ（JSON-LD） -->
+<script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@type": "WebSite",
+  "name": "CardRadar",
+  "url": "https://public-azure-six.vercel.app/",
+  "description": "トレーディングカード最安値比較サービス",
+  "potentialAction": {
+    "@type": "SearchAction",
+    "target": "https://public-azure-six.vercel.app/?q={search_term_string}",
+    "query-input": "required name=search_term_string"
+  }
+}
+</script>
+
 <script src="https://cdn.tailwindcss.com"></script>
 <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700;900&family=Noto+Sans+JP:wght@300;400;700&family=JetBrains+Mono:wght@400;700&display=swap" rel="stylesheet">
+
 <style>
-:root {
-  --neon-cyan:  #00f5ff;
-  --neon-pink:  #ff0080;
-  --neon-green: #00ff88;
-  --neon-yellow:#ffe600;
-  --bg-void:    #030712;
-  --bg-deep:    #060d1a;
-  --bg-card:    #0a1628;
-  --bg-surface: #0f1f35;
-  --text-main:  #e2f0ff;
-  --text-muted: #4a7090;
+/* ══════════════════════════════════════════════════
+   CSS カスタムプロパティ & リセット
+══════════════════════════════════════════════════ */
+:root{
+  --cyan:   #00f5ff;
+  --pink:   #ff0080;
+  --green:  #00ff88;
+  --yellow: #ffe600;
+  --purple: #7b2fff;
+  --bg0:    #030712;
+  --bg1:    #060d1a;
+  --bg2:    #0a1628;
+  --bg3:    #0f1f35;
+  --txt:    #e2f0ff;
+  --muted:  #4a7090;
+  --border: rgba(0,245,255,.15);
 }
 *{box-sizing:border-box;margin:0;padding:0;}
-body{background:var(--bg-void);color:var(--text-main);font-family:'Noto Sans JP',sans-serif;min-height:100vh;overflow-x:hidden;}
+html{scroll-behavior:smooth;}
+body{background:var(--bg0);color:var(--txt);font-family:'Noto Sans JP',sans-serif;min-height:100vh;overflow-x:hidden;}
 
 /* ── 背景グリッド ── */
 .grid-bg{position:fixed;inset:0;z-index:0;pointer-events:none;
-  background-image:linear-gradient(rgba(0,245,255,.03) 1px,transparent 1px),
-                   linear-gradient(90deg,rgba(0,245,255,.03) 1px,transparent 1px);
-  background-size:40px 40px;animation:gridMove 20s linear infinite;}
+  background-image:linear-gradient(rgba(0,245,255,.03)1px,transparent 1px),
+                   linear-gradient(90deg,rgba(0,245,255,.03)1px,transparent 1px);
+  background-size:40px 40px;animation:gridMove 22s linear infinite;}
 @keyframes gridMove{to{background-position:40px 40px;}}
 .noise{position:fixed;inset:0;z-index:1;opacity:.02;pointer-events:none;
-  background-image:url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
-  background-size:200px;}
-.wrap{position:relative;z-index:10;}
+  background:url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E") 0/200px;}
+.page{position:relative;z-index:10;}
 
 /* ── ティッカー ── */
-.ticker-bar{background:rgba(0,245,255,.04);border-bottom:1px solid rgba(0,245,255,.1);padding:6px 0;overflow:hidden;}
-.ticker-inner{display:flex;gap:48px;white-space:nowrap;animation:ticker 40s linear infinite;}
+.ticker{background:rgba(0,245,255,.04);border-bottom:1px solid rgba(0,245,255,.1);padding:6px 0;overflow:hidden;}
+.ticker-inner{display:flex;gap:48px;white-space:nowrap;animation:tick 40s linear infinite;}
 .ticker-inner:hover{animation-play-state:paused;}
-@keyframes ticker{from{transform:translateX(0);}to{transform:translateX(-50%);}}
-.t-item{font-family:'JetBrains Mono',monospace;font-size:11px;color:var(--text-muted);flex-shrink:0;}
-.t-name{color:var(--text-main);}
-.t-up{color:var(--neon-pink);}
-.t-dn{color:var(--neon-green);}
-.t-fl{color:var(--text-muted);}
+@keyframes tick{to{transform:translateX(-50%);}}
+.ti{font-family:'JetBrains Mono',monospace;font-size:11px;color:var(--muted);flex-shrink:0;}
+.ti .n{color:var(--txt);}
+.ti .up{color:var(--pink);}
+.ti .dn{color:var(--green);}
 
 /* ── ヘッダー ── */
-.header{background:linear-gradient(180deg,rgba(6,13,26,.98),rgba(3,7,18,.95));
+.hdr{background:linear-gradient(180deg,rgba(6,13,26,.98),rgba(3,7,18,.96));
   border-bottom:1px solid rgba(0,245,255,.18);backdrop-filter:blur(20px);
-  position:sticky;top:0;z-index:50;padding:12px 24px;
-  display:flex;align-items:center;justify-content:space-between;}
-.logo{font-family:'Orbitron',monospace;font-weight:900;font-size:22px;letter-spacing:.15em;
-  background:linear-gradient(135deg,var(--neon-cyan) 0%,#fff 50%,var(--neon-pink) 100%);
+  position:sticky;top:0;z-index:100;padding:12px 24px;
+  display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap;}
+.logo{font-family:'Orbitron',monospace;font-weight:900;font-size:clamp(18px,4vw,24px);letter-spacing:.15em;
+  background:linear-gradient(135deg,var(--cyan) 0%,#fff 50%,var(--pink) 100%);
   -webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;
-  filter:drop-shadow(0 0 18px rgba(0,245,255,.45));}
-.live-badge{display:flex;align-items:center;gap:6px;background:rgba(0,0,0,.3);
-  padding:4px 10px;border-radius:99px;border:1px solid rgba(0,255,136,.25);}
-.live-dot{width:7px;height:7px;border-radius:50%;background:var(--neon-green);
-  box-shadow:0 0 8px var(--neon-green);animation:blink 1.5s ease-in-out infinite;}
+  filter:drop-shadow(0 0 18px rgba(0,245,255,.45));text-decoration:none;}
+.live-dot{width:7px;height:7px;border-radius:50%;background:var(--green);
+  box-shadow:0 0 8px var(--green);animation:blink 1.5s ease-in-out infinite;flex-shrink:0;}
 @keyframes blink{50%{opacity:.3;transform:scale(.8);}}
-.live-txt{font-family:'JetBrains Mono',monospace;font-size:10px;color:var(--neon-green);letter-spacing:.1em;}
-.clock-txt{font-family:'JetBrains Mono',monospace;font-size:11px;color:var(--text-muted);}
-.hdr-btn{font-family:'Orbitron',monospace;font-size:9px;font-weight:700;letter-spacing:.12em;
+.badge-live{display:flex;align-items:center;gap:6px;background:rgba(0,0,0,.3);
+  padding:4px 10px;border-radius:99px;border:1px solid rgba(0,255,136,.25);}
+.badge-live span{font-family:'JetBrains Mono',monospace;font-size:10px;color:var(--green);letter-spacing:.1em;}
+.hdr-right{display:flex;align-items:center;gap:12px;}
+.clock{font-family:'JetBrains Mono',monospace;font-size:11px;color:var(--muted);}
+
+/* ── ボタン基底 ── */
+.btn{cursor:pointer;transition:.2s;border:none;background:none;font-family:inherit;}
+.btn-outline{font-family:'Orbitron',monospace;font-size:9px;font-weight:700;letter-spacing:.12em;
   padding:8px 16px;border-radius:4px;border:1px solid rgba(0,245,255,.35);
-  background:rgba(0,245,255,.06);color:var(--neon-cyan);cursor:pointer;transition:.2s;text-transform:uppercase;}
-.hdr-btn:hover{background:rgba(0,245,255,.15);box-shadow:0 0 14px rgba(0,245,255,.25);}
+  background:rgba(0,245,255,.06);color:var(--cyan);text-transform:uppercase;}
+.btn-outline:hover{background:rgba(0,245,255,.15);box-shadow:0 0 14px rgba(0,245,255,.25);}
+.btn-primary{font-family:'Orbitron',monospace;font-weight:700;font-size:11px;letter-spacing:.15em;
+  padding:13px;border-radius:4px;background:linear-gradient(135deg,var(--cyan),#0080ff);
+  color:#000;text-transform:uppercase;box-shadow:0 4px 20px rgba(0,245,255,.3);width:100%;}
+.btn-primary:hover{transform:translateY(-1px);box-shadow:0 8px 28px rgba(0,245,255,.4);}
 
 /* ── 統計バー ── */
-.stats-row{display:flex;flex-wrap:wrap;gap:20px;align-items:center;
+.stats{display:flex;flex-wrap:wrap;gap:20px;align-items:center;
   background:rgba(10,22,40,.9);border:1px solid rgba(0,245,255,.1);
   border-radius:8px;padding:14px 22px;margin:20px 24px 0;}
-.stat-lbl{font-family:'JetBrains Mono',monospace;font-size:9px;text-transform:uppercase;
-  letter-spacing:.15em;color:var(--text-muted);margin-bottom:2px;}
-.stat-val{font-family:'Orbitron',monospace;font-weight:700;font-size:18px;}
-.stat-div{width:1px;height:32px;background:rgba(255,255,255,.08);}
-.stat-spacer{flex:1;}
+.stat-l{font-family:'JetBrains Mono',monospace;font-size:9px;text-transform:uppercase;letter-spacing:.15em;color:var(--muted);margin-bottom:2px;}
+.stat-v{font-family:'Orbitron',monospace;font-weight:700;font-size:18px;}
+.stat-sep{width:1px;height:32px;background:rgba(255,255,255,.08);}
 
 /* ── セクションラベル ── */
-.sec-label{font-family:'Orbitron',monospace;font-size:10px;font-weight:700;
-  letter-spacing:.2em;color:var(--text-muted);text-transform:uppercase;
-  border-left:2px solid var(--neon-cyan);padding-left:10px;}
+.sec{font-family:'Orbitron',monospace;font-size:10px;font-weight:700;
+  letter-spacing:.2em;color:var(--muted);text-transform:uppercase;
+  border-left:2px solid var(--cyan);padding-left:10px;}
 
 /* ── ゲームタブ ── */
-.game-tab{font-family:'Orbitron',monospace;font-size:11px;font-weight:700;letter-spacing:.1em;
+.tabs{display:flex;flex-wrap:wrap;gap:8px;}
+.tab{font-family:'Orbitron',monospace;font-size:11px;font-weight:700;letter-spacing:.1em;
   padding:9px 18px;border-radius:4px;cursor:pointer;transition:.2s;user-select:none;
   border:1px solid rgba(0,245,255,.15);background:rgba(10,22,40,.8);
-  color:var(--text-muted);text-transform:uppercase;white-space:nowrap;}
-.game-tab:hover{border-color:rgba(0,245,255,.4);color:var(--neon-cyan);}
-.game-tab.tab-cyan  {border-color:var(--neon-cyan);color:var(--neon-cyan);background:rgba(0,245,255,.07);box-shadow:0 0 18px rgba(0,245,255,.2);}
-.game-tab.tab-pink  {border-color:var(--neon-pink);color:var(--neon-pink);background:rgba(255,0,128,.07);box-shadow:0 0 18px rgba(255,0,128,.2);}
-.game-tab.tab-yellow{border-color:var(--neon-yellow);color:var(--neon-yellow);background:rgba(255,230,0,.07);box-shadow:0 0 18px rgba(255,230,0,.2);}
+  color:var(--muted);text-transform:uppercase;white-space:nowrap;}
+.tab:hover{border-color:rgba(0,245,255,.4);color:var(--cyan);}
+.tab.tc{border-color:var(--cyan);color:var(--cyan);background:rgba(0,245,255,.07);box-shadow:0 0 18px rgba(0,245,255,.2);}
+.tab.tp{border-color:var(--pink);color:var(--pink);background:rgba(255,0,128,.07);box-shadow:0 0 18px rgba(255,0,128,.2);}
+.tab.ty{border-color:var(--yellow);color:var(--yellow);background:rgba(255,230,0,.07);box-shadow:0 0 18px rgba(255,230,0,.2);}
+.tab.tv{border-color:var(--purple);color:var(--purple);background:rgba(123,47,255,.07);box-shadow:0 0 18px rgba(123,47,255,.2);}
 
-/* ── 検索 + ソート ── */
+/* ── 検索 ── */
 .search-wrap{position:relative;flex:1;min-width:220px;}
-.search-icon{position:absolute;left:12px;top:50%;transform:translateY(-50%);
-  color:var(--text-muted);pointer-events:none;width:16px;height:16px;}
-.search-input{width:100%;background:rgba(10,22,40,.9);border:1px solid rgba(0,245,255,.2);
-  color:var(--text-main);font-family:'JetBrains Mono',monospace;font-size:13px;
+.search-ico{position:absolute;left:12px;top:50%;transform:translateY(-50%);color:var(--muted);pointer-events:none;width:16px;height:16px;}
+.search-inp{width:100%;background:rgba(10,22,40,.9);border:1px solid rgba(0,245,255,.2);
+  color:var(--txt);font-family:'JetBrains Mono',monospace;font-size:13px;
   padding:10px 14px 10px 38px;border-radius:4px;outline:none;transition:.2s;}
-.search-input:focus{border-color:var(--neon-cyan);box-shadow:0 0 16px rgba(0,245,255,.12);}
-.search-input::placeholder{color:var(--text-muted);}
-.sort-btn{font-family:'JetBrains Mono',monospace;font-size:11px;padding:8px 14px;
+.search-inp:focus{border-color:var(--cyan);box-shadow:0 0 16px rgba(0,245,255,.12);}
+.search-inp::placeholder{color:var(--muted);}
+
+/* ── ソートボタン ── */
+.sort{font-family:'JetBrains Mono',monospace;font-size:11px;padding:8px 14px;
   border-radius:3px;border:1px solid rgba(255,255,255,.1);background:rgba(255,255,255,.03);
-  color:var(--text-muted);cursor:pointer;transition:.2s;}
-.sort-btn:hover,.sort-btn.active{border-color:rgba(0,245,255,.35);color:var(--neon-cyan);background:rgba(0,245,255,.06);}
+  color:var(--muted);cursor:pointer;transition:.2s;}
+.sort:hover,.sort.on{border-color:rgba(0,245,255,.35);color:var(--cyan);background:rgba(0,245,255,.06);}
 
 /* ── カードグリッド ── */
-.card-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(240px,1fr));gap:16px;padding:12px 24px 48px;}
+.grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(248px,1fr));gap:16px;padding:12px 24px 8px;}
 @keyframes fadeUp{from{opacity:0;transform:translateY(14px);}to{opacity:1;transform:translateY(0);}}
 
 /* ── 価格カード ── */
-.p-card{background:var(--bg-card);border:1px solid rgba(0,245,255,.12);border-radius:8px;
-  overflow:hidden;transition:.3s;cursor:pointer;position:relative;animation:fadeUp .4s ease both;}
-.p-card::before{content:'';position:absolute;top:0;left:0;right:0;height:1px;
-  background:linear-gradient(90deg,transparent,var(--neon-cyan),transparent);opacity:0;transition:.3s;}
-.p-card:hover{border-color:rgba(0,245,255,.38);box-shadow:0 8px 36px rgba(0,245,255,.1);transform:translateY(-2px);}
-.p-card:hover::before{opacity:1;}
+.pcard{background:var(--bg2);border:1px solid rgba(0,245,255,.12);border-radius:8px;
+  overflow:hidden;transition:.3s;position:relative;animation:fadeUp .4s ease both;}
+.pcard::before{content:'';position:absolute;top:0;left:0;right:0;height:1px;
+  background:linear-gradient(90deg,transparent,var(--cyan),transparent);opacity:0;transition:.3s;}
+.pcard:hover{border-color:rgba(0,245,255,.38);box-shadow:0 8px 36px rgba(0,245,255,.1);transform:translateY(-2px);}
+.pcard:hover::before{opacity:1;}
 
-.card-thumb{aspect-ratio:3/4;background:linear-gradient(135deg,#0a1628,#0f2040);
+.thumb{aspect-ratio:3/4;background:linear-gradient(135deg,#0a1628,#0f2040);
   display:flex;align-items:center;justify-content:center;font-size:52px;position:relative;overflow:hidden;}
-.card-thumb::after{content:'';position:absolute;top:-50%;left:0;right:0;height:50%;
+.thumb::after{content:'';position:absolute;top:-50%;left:0;right:0;height:50%;
   background:linear-gradient(transparent,rgba(0,245,255,.025),transparent);
   animation:scan 3.5s linear infinite;}
 @keyframes scan{to{top:150%;}}
 
-.rarity-badge{position:absolute;top:8px;right:8px;font-family:'Orbitron',monospace;
+.rbadge{position:absolute;top:8px;right:8px;font-family:'Orbitron',monospace;
   font-size:9px;font-weight:700;padding:3px 8px;border-radius:2px;letter-spacing:.1em;}
-.r-sec{background:linear-gradient(135deg,var(--neon-pink),#8b0057);color:#fff;box-shadow:0 0 10px rgba(255,0,128,.5);}
+.r-sec{background:linear-gradient(135deg,var(--pink),#8b0057);color:#fff;box-shadow:0 0 10px rgba(255,0,128,.5);}
 .r-ur {background:linear-gradient(135deg,#ffd700,#ff8c00);color:#000;box-shadow:0 0 10px rgba(255,215,0,.4);}
 .r-sr {background:linear-gradient(135deg,#c0c0c0,#808080);color:#000;}
 .r-r  {background:linear-gradient(135deg,#4169e1,#1e3a8a);color:#fff;}
-.hot-badge{position:absolute;top:8px;left:8px;font-family:'Orbitron',monospace;font-size:8px;
+.hot{position:absolute;top:8px;left:8px;font-family:'Orbitron',monospace;font-size:8px;
   font-weight:700;padding:2px 6px;border-radius:2px;letter-spacing:.08em;
   background:linear-gradient(135deg,#ff4400,#ff0080);color:#fff;box-shadow:0 0 8px rgba(255,68,0,.5);}
 
-.card-body{padding:12px;}
-.card-name{font-weight:700;font-size:14px;line-height:1.3;}
-.card-code{font-family:'JetBrains Mono',monospace;font-size:10px;color:var(--text-muted);}
-.card-set {font-size:11px;color:var(--text-muted);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;margin-bottom:10px;}
-.name-row{display:flex;align-items:flex-start;justify-content:space-between;gap:6px;margin-bottom:2px;}
+.cbody{padding:12px;}
+.cname{font-weight:700;font-size:14px;line-height:1.3;}
+.ccode{font-family:'JetBrains Mono',monospace;font-size:10px;color:var(--muted);}
+.cset {font-size:11px;color:var(--muted);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;margin-bottom:10px;}
+.nrow{display:flex;align-items:flex-start;justify-content:space-between;gap:6px;margin-bottom:2px;}
 
-.chg{font-family:'JetBrains Mono',monospace;font-size:10px;font-weight:700;padding:2px 6px;border-radius:2px;flex-shrink:0;}
-.chg-up{color:var(--neon-pink);background:rgba(255,0,128,.1);border:1px solid rgba(255,0,128,.3);}
-.chg-dn{color:var(--neon-green);background:rgba(0,255,136,.1);border:1px solid rgba(0,255,136,.3);}
-.chg-fl{color:var(--text-muted);background:rgba(255,255,255,.05);border:1px solid rgba(255,255,255,.1);}
+/* 変動バッジ */
+.chg{font-family:'JetBrains Mono',monospace;font-size:10px;font-weight:700;
+  padding:2px 6px;border-radius:2px;flex-shrink:0;}
+.cup{color:var(--pink);background:rgba(255,0,128,.1);border:1px solid rgba(255,0,128,.3);}
+.cdn{color:var(--green);background:rgba(0,255,136,.1);border:1px solid rgba(0,255,136,.3);}
+.cfl{color:var(--muted);background:rgba(255,255,255,.05);border:1px solid rgba(255,255,255,.1);}
 
-.lowest-block{background:rgba(0,255,136,.06);border:1px solid rgba(0,255,136,.2);
+/* 最安値ブロック */
+.low-block{background:rgba(0,255,136,.06);border:1px solid rgba(0,255,136,.2);
   border-radius:5px;padding:8px 10px;display:flex;align-items:center;justify-content:space-between;margin-bottom:8px;}
-.lowest-lbl{font-family:'JetBrains Mono',monospace;font-size:9px;color:var(--neon-green);letter-spacing:.1em;text-transform:uppercase;margin-bottom:2px;}
-.lowest-price{font-family:'Orbitron',monospace;font-size:20px;font-weight:900;color:var(--neon-green);}
-.lowest-site{font-family:'JetBrains Mono',monospace;font-size:10px;color:var(--text-muted);text-align:right;}
+.low-lbl{font-family:'JetBrains Mono',monospace;font-size:9px;color:var(--green);letter-spacing:.1em;text-transform:uppercase;margin-bottom:2px;}
+.low-price{font-family:'Orbitron',monospace;font-size:20px;font-weight:900;color:var(--green);}
+.low-site{font-family:'JetBrains Mono',monospace;font-size:10px;color:var(--muted);text-align:right;}
 
-.price-row{display:grid;grid-template-columns:repeat(3,1fr);gap:5px;margin-bottom:10px;}
-.price-cell{background:rgba(0,0,0,.28);border:1px solid rgba(255,255,255,.05);border-radius:4px;padding:7px 8px;}
-.price-cell.low{border-color:rgba(0,255,136,.3);background:rgba(0,255,136,.05);}
-.p-site{font-family:'JetBrains Mono',monospace;font-size:8px;text-transform:uppercase;letter-spacing:.08em;color:var(--text-muted);margin-bottom:2px;}
-.p-val{font-family:'Orbitron',monospace;font-size:12px;font-weight:700;}
-.p-up{color:var(--neon-pink);}
-.p-dn{color:var(--neon-green);}
+/* 3サイト価格 */
+.prow{display:grid;grid-template-columns:repeat(3,1fr);gap:5px;margin-bottom:8px;}
+.pcell{background:rgba(0,0,0,.28);border:1px solid rgba(255,255,255,.05);border-radius:4px;padding:7px 8px;}
+.pcell.lo{border-color:rgba(0,255,136,.3);background:rgba(0,255,136,.05);}
+.psite{font-family:'JetBrains Mono',monospace;font-size:8px;text-transform:uppercase;letter-spacing:.08em;color:var(--muted);margin-bottom:2px;}
+.pval{font-family:'Orbitron',monospace;font-size:12px;font-weight:700;}
+.pup{color:var(--pink);}
+.pdn{color:var(--green);}
 
-.alert-btn{width:100%;font-family:'Orbitron',monospace;font-size:9px;font-weight:700;
-  letter-spacing:.1em;padding:8px;border-radius:3px;border:1px solid rgba(0,245,255,.3);
-  background:rgba(0,245,255,.05);color:var(--neon-cyan);cursor:pointer;transition:.2s;text-transform:uppercase;}
+/* アクションボタン行 */
+.action-row{display:flex;gap:6px;margin-top:2px;}
+.alert-btn{flex:1;font-family:'Orbitron',monospace;font-size:9px;font-weight:700;
+  letter-spacing:.08em;padding:7px 6px;border-radius:3px;border:1px solid rgba(0,245,255,.3);
+  background:rgba(0,245,255,.05);color:var(--cyan);cursor:pointer;transition:.2s;text-transform:uppercase;}
 .alert-btn:hover{background:rgba(0,245,255,.15);box-shadow:0 0 12px rgba(0,245,255,.2);}
 
-.empty-state{grid-column:1/-1;text-align:center;padding:60px 20px;
-  font-family:'JetBrains Mono',monospace;font-size:13px;color:var(--text-muted);}
+/* ── X（Twitter）シェアボタン（要件3） ── */
+.share-btn{display:flex;align-items:center;justify-content:center;gap:4px;
+  padding:7px 10px;border-radius:3px;border:1px solid rgba(255,255,255,.15);
+  background:rgba(255,255,255,.04);color:var(--muted);cursor:pointer;transition:.2s;
+  font-family:'JetBrains Mono',monospace;font-size:9px;white-space:nowrap;flex-shrink:0;}
+.share-btn:hover{border-color:rgba(255,255,255,.4);color:var(--txt);background:rgba(255,255,255,.08);}
+.share-btn svg{width:12px;height:12px;fill:currentColor;flex-shrink:0;}
 
-/* ── モーダル ── */
-.modal-overlay{position:fixed;inset:0;background:rgba(0,0,0,.85);backdrop-filter:blur(8px);
-  z-index:1000;display:flex;align-items:center;justify-content:center;
+/* 空ステート */
+.empty{grid-column:1/-1;text-align:center;padding:64px 20px;
+  font-family:'JetBrains Mono',monospace;font-size:13px;color:var(--muted);}
+.empty span{display:block;font-size:32px;margin-bottom:12px;opacity:.4;}
+
+/* ── フッター ── */
+.footer{background:var(--bg1);border-top:1px solid rgba(0,245,255,.08);
+  padding:20px 24px;margin-top:16px;display:flex;flex-wrap:wrap;
+  align-items:center;justify-content:space-between;gap:12px;}
+.footer-logo{font-family:'Orbitron',monospace;font-size:14px;font-weight:900;
+  background:linear-gradient(135deg,var(--cyan),var(--pink));
+  -webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;}
+.footer-links{display:flex;gap:20px;flex-wrap:wrap;}
+.footer-link{font-family:'JetBrains Mono',monospace;font-size:11px;color:var(--muted);
+  text-decoration:none;cursor:pointer;transition:.2s;background:none;border:none;padding:0;}
+.footer-link:hover{color:var(--cyan);}
+.footer-copy{font-family:'JetBrains Mono',monospace;font-size:10px;color:var(--muted);width:100%;text-align:center;margin-top:8px;}
+
+/* ══════════════════════════════════════════════
+   モーダル共通
+══════════════════════════════════════════════ */
+.overlay{position:fixed;inset:0;background:rgba(0,0,0,.85);backdrop-filter:blur(8px);
+  z-index:200;display:flex;align-items:center;justify-content:center;
   opacity:0;pointer-events:none;transition:opacity .3s;}
-.modal-overlay.open{opacity:1;pointer-events:all;}
-.modal-box{background:var(--bg-deep);border:1px solid rgba(0,245,255,.3);border-radius:8px;
-  padding:32px;width:90%;max-width:460px;position:relative;overflow:hidden;
-  transform:translateY(20px);transition:transform .3s;box-shadow:0 0 60px rgba(0,245,255,.12);}
-.modal-overlay.open .modal-box{transform:translateY(0);}
-.modal-box::before{content:'';position:absolute;top:0;left:0;right:0;height:2px;
-  background:linear-gradient(90deg,transparent,var(--neon-cyan),var(--neon-pink),transparent);}
-.modal-close{position:absolute;top:14px;right:16px;background:none;border:none;
-  color:var(--text-muted);cursor:pointer;font-size:18px;line-height:1;}
-.modal-title{font-family:'Orbitron',monospace;font-weight:900;font-size:17px;color:var(--neon-cyan);margin-bottom:4px;}
-.modal-sub{font-family:'JetBrains Mono',monospace;font-size:11px;color:var(--text-muted);margin-bottom:22px;}
-.form-lbl{font-family:'Orbitron',monospace;font-size:9px;letter-spacing:.12em;
-  color:var(--text-muted);text-transform:uppercase;display:block;margin-bottom:7px;}
-.form-input{width:100%;background:rgba(0,0,0,.4);border:1px solid rgba(0,245,255,.2);
-  border-radius:4px;padding:10px 13px;color:var(--text-main);
+.overlay.open{opacity:1;pointer-events:all;}
+.mbox{background:var(--bg1);border:1px solid rgba(0,245,255,.3);border-radius:8px;
+  padding:32px;width:90%;max-width:520px;position:relative;overflow:hidden;
+  transform:translateY(20px);transition:transform .3s;
+  box-shadow:0 0 60px rgba(0,245,255,.12);max-height:90vh;overflow-y:auto;}
+.overlay.open .mbox{transform:translateY(0);}
+.mbox::before{content:'';position:absolute;top:0;left:0;right:0;height:2px;
+  background:linear-gradient(90deg,transparent,var(--cyan),var(--pink),transparent);}
+.mclose{position:absolute;top:14px;right:16px;background:none;border:none;
+  color:var(--muted);cursor:pointer;font-size:20px;line-height:1;transition:.2s;}
+.mclose:hover{color:var(--txt);}
+.mtitle{font-family:'Orbitron',monospace;font-weight:900;font-size:17px;color:var(--cyan);margin-bottom:4px;}
+.msub{font-family:'JetBrains Mono',monospace;font-size:11px;color:var(--muted);margin-bottom:22px;}
+
+/* フォーム部品 */
+.flbl{font-family:'Orbitron',monospace;font-size:9px;letter-spacing:.12em;
+  color:var(--muted);text-transform:uppercase;display:block;margin-bottom:7px;}
+.finp{width:100%;background:rgba(0,0,0,.4);border:1px solid rgba(0,245,255,.2);
+  border-radius:4px;padding:10px 13px;color:var(--txt);
   font-family:'JetBrains Mono',monospace;font-size:13px;outline:none;transition:.2s;margin-bottom:16px;}
-.form-input:focus{border-color:var(--neon-cyan);box-shadow:0 0 12px rgba(0,245,255,.1);}
-.form-input::placeholder{color:var(--text-muted);}
-.form-select{width:100%;background:rgba(0,0,0,.4);border:1px solid rgba(0,245,255,.2);
-  border-radius:4px;padding:10px 13px;color:var(--text-main);
+.finp:focus{border-color:var(--cyan);box-shadow:0 0 12px rgba(0,245,255,.1);}
+.finp::placeholder{color:var(--muted);}
+.fsel{width:100%;background:rgba(0,0,0,.4);border:1px solid rgba(0,245,255,.2);
+  border-radius:4px;padding:10px 13px;color:var(--txt);
   font-family:'JetBrains Mono',monospace;font-size:13px;outline:none;cursor:pointer;margin-bottom:16px;}
-.form-select option{background:var(--bg-deep);}
+.fsel option{background:var(--bg1);}
 .notify-row{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:16px;}
-.notify-opt{display:flex;align-items:center;gap:8px;padding:10px;
+.nopt{display:flex;align-items:center;gap:8px;padding:10px;
   border:1px solid rgba(0,245,255,.2);border-radius:4px;cursor:pointer;background:rgba(0,245,255,.03);}
-.notify-opt span{font-family:'JetBrains Mono',monospace;font-size:12px;}
+.nopt span{font-family:'JetBrains Mono',monospace;font-size:12px;}
 input[type=range]{-webkit-appearance:none;width:100%;height:4px;border-radius:2px;
   background:rgba(0,245,255,.2);outline:none;margin-bottom:4px;}
 input[type=range]::-webkit-slider-thumb{-webkit-appearance:none;width:16px;height:16px;
-  border-radius:50%;background:var(--neon-cyan);cursor:pointer;box-shadow:0 0 8px var(--neon-cyan);}
-.range-labels{display:flex;justify-content:space-between;font-family:'JetBrains Mono',monospace;
-  font-size:9px;color:var(--text-muted);margin-bottom:16px;}
-.submit-btn{width:100%;font-family:'Orbitron',monospace;font-weight:700;font-size:11px;
-  letter-spacing:.15em;padding:13px;border-radius:4px;border:none;
-  background:linear-gradient(135deg,var(--neon-cyan),#0080ff);color:#000;cursor:pointer;
-  transition:.2s;text-transform:uppercase;box-shadow:0 4px 20px rgba(0,245,255,.3);}
-.submit-btn:hover{transform:translateY(-1px);box-shadow:0 8px 28px rgba(0,245,255,.4);}
+  border-radius:50%;background:var(--cyan);cursor:pointer;box-shadow:0 0 8px var(--cyan);}
+.rlabels{display:flex;justify-content:space-between;font-family:'JetBrains Mono',monospace;
+  font-size:9px;color:var(--muted);margin-bottom:16px;}
+
+/* ── プライバシーポリシーモーダル（要件2） ── */
+.pp-section{margin-bottom:20px;}
+.pp-h{font-family:'Orbitron',monospace;font-size:13px;color:var(--cyan);
+  margin-bottom:8px;padding-bottom:6px;border-bottom:1px solid rgba(0,245,255,.15);}
+.pp-p{font-size:12px;line-height:1.8;color:#b0c8e0;font-family:'Noto Sans JP',sans-serif;}
+.pp-ul{padding-left:16px;margin-top:6px;}
+.pp-ul li{font-size:12px;line-height:1.8;color:#b0c8e0;margin-bottom:4px;}
 
 /* ── トースト ── */
 .toast{position:fixed;bottom:28px;right:28px;z-index:9999;
-  background:var(--bg-deep);border:1px solid var(--neon-green);border-radius:6px;
-  padding:13px 18px;font-family:'JetBrains Mono',monospace;font-size:12px;color:var(--neon-green);
+  background:var(--bg1);border:1px solid var(--green);border-radius:6px;
+  padding:13px 18px;font-family:'JetBrains Mono',monospace;font-size:12px;color:var(--green);
   box-shadow:0 0 24px rgba(0,255,136,.2);transform:translateX(130%);transition:transform .4s cubic-bezier(.16,1,.3,1);}
 .toast.show{transform:translateX(0);}
 
@@ -219,190 +307,322 @@ input[type=range]::-webkit-slider-thumb{-webkit-appearance:none;width:16px;heigh
 ::-webkit-scrollbar-thumb{background:rgba(0,245,255,.3);border-radius:2px;}
 </style>
 </head>
-<body>
 
+<body>
 <div class="grid-bg"></div>
 <div class="noise"></div>
 <div class="toast" id="toastEl"></div>
 
-<!-- ティッカー -->
-<div class="ticker-bar">
+<!-- ═══════════════════════════════════ ティッカー ═══════ -->
+<div class="ticker" aria-hidden="true">
   <div class="ticker-inner" id="tickerEl"></div>
 </div>
 
-<!-- ヘッダー -->
-<header class="header">
+<!-- ═══════════════════════════════════ ヘッダー ════════ -->
+<header class="hdr">
   <div style="display:flex;align-items:center;gap:12px">
-    <div class="logo">CARD<span style="color:var(--neon-pink)">RADAR</span></div>
-    <div class="live-badge"><div class="live-dot"></div><span class="live-txt">LIVE</span></div>
+    <a href="/" class="logo" aria-label="CardRadar トップへ">CARD<span style="color:var(--pink)">RADAR</span></a>
+    <div class="badge-live" aria-label="ライブ更新中">
+      <div class="live-dot"></div>
+      <span>LIVE</span>
+    </div>
   </div>
-  <div style="display:flex;align-items:center;gap:16px">
-    <span class="clock-txt" id="clockEl"></span>
-    <button class="hdr-btn" onclick="openModal(null)">+ アラート設定</button>
+  <div class="hdr-right">
+    <time class="clock" id="clockEl" aria-live="polite"></time>
+    <button class="btn btn-outline" onclick="openAlertModal(null)" aria-label="価格アラートを設定する">
+      + アラート設定
+    </button>
   </div>
 </header>
 
-<div class="wrap">
+<!-- ═══════════════════════════════════ 本体 ════════════ -->
+<main class="page">
 
   <!-- 統計バー -->
-  <div class="stats-row">
-    <div><div class="stat-lbl">監視カード数</div><div class="stat-val" style="color:var(--neon-cyan)">2,847</div></div>
-    <div class="stat-div"></div>
-    <div><div class="stat-lbl">24h 最安値更新</div><div class="stat-val" style="color:var(--neon-green)">134件</div></div>
-    <div class="stat-div"></div>
-    <div><div class="stat-lbl">平均価格変動</div><div class="stat-val" style="color:var(--neon-pink)">▲ 3.2%</div></div>
-    <div class="stat-div"></div>
-    <div><div class="stat-lbl">今日の取引数</div><div class="stat-val" style="color:var(--neon-yellow)">18,490</div></div>
-    <div class="stat-spacer"></div>
+  <div class="stats" role="region" aria-label="サイト統計">
+    <div>
+      <div class="stat-l">監視カード数</div>
+      <div class="stat-v" style="color:var(--cyan)">2,847</div>
+    </div>
+    <div class="stat-sep"></div>
+    <div>
+      <div class="stat-l">24h 最安値更新</div>
+      <div class="stat-v" style="color:var(--green)">134件</div>
+    </div>
+    <div class="stat-sep"></div>
+    <div>
+      <div class="stat-l">平均価格変動</div>
+      <div class="stat-v" style="color:var(--pink)">▲ 3.2%</div>
+    </div>
+    <div class="stat-sep"></div>
+    <div>
+      <div class="stat-l">今日の取引数</div>
+      <div class="stat-v" style="color:var(--yellow)">18,490</div>
+    </div>
+    <div style="flex:1"></div>
     <div style="text-align:right">
-      <div class="stat-lbl">最終更新</div>
+      <div class="stat-l">最終更新</div>
       <div style="font-family:'JetBrains Mono',monospace;font-size:12px" id="updateEl">--:--:--</div>
     </div>
   </div>
 
   <!-- ゲームタブ -->
   <div style="padding:20px 24px 0">
-    <div class="sec-label" style="margin-bottom:12px">ゲーム選択</div>
-    <div style="display:flex;flex-wrap:wrap;gap:8px">
-      <button class="game-tab tab-cyan"  data-game="pokemon"    onclick="switchGame(this)">⚡ ポケモン</button>
-      <button class="game-tab"           data-game="onepiece"   onclick="switchGame(this)">☠ ワンピース</button>
-      <button class="game-tab"           data-game="yugioh"     onclick="switchGame(this)">👁 遊戯王</button>
-      <button class="game-tab"           data-game="dragonball" onclick="switchGame(this)">🔮 ドラゴンボール</button>
-      <button class="game-tab"           data-game="cardfight"  onclick="switchGame(this)">⚔ ヴァンガード</button>
+    <div class="sec" style="margin-bottom:12px">ゲーム選択</div>
+    <div class="tabs" id="tabsEl" role="tablist" aria-label="ゲーム選択">
+      <button class="tab tc" data-game="pokemon"    role="tab" aria-selected="true"  onclick="switchGame(this)">⚡ ポケモン</button>
+      <button class="tab"    data-game="onepiece"   role="tab" aria-selected="false" onclick="switchGame(this)">☠ ワンピース</button>
+      <button class="tab"    data-game="yugioh"     role="tab" aria-selected="false" onclick="switchGame(this)">👁 遊戯王</button>
+      <button class="tab"    data-game="dragonball" role="tab" aria-selected="false" onclick="switchGame(this)">🔮 ドラゴンボール</button>
+      <button class="tab"    data-game="cardfight"  role="tab" aria-selected="false" onclick="switchGame(this)">⚔ ヴァンガード</button>
     </div>
   </div>
 
   <!-- 検索 + ソート -->
   <div style="display:flex;flex-wrap:wrap;gap:10px;padding:16px 24px 0;align-items:center">
     <div class="search-wrap">
-      <svg class="search-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/>
+      <svg class="search-ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" aria-hidden="true">
+        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+          d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/>
       </svg>
-      <input type="text" id="searchEl" class="search-input"
+      <input type="search" id="searchEl" class="search-inp"
         placeholder="カード名・型番・弾名で検索... 例: リザードン / sv3a"
+        aria-label="カード検索"
         oninput="onSearch()">
     </div>
-    <button class="sort-btn active" id="s-price"  onclick="setSort('price',this)">価格順</button>
-    <button class="sort-btn"        id="s-change" onclick="setSort('change',this)">変動率</button>
-    <button class="sort-btn"        id="s-new"    onclick="setSort('new',this)">新着順</button>
+    <button class="sort on" id="s-price"  onclick="setSort('price',this)"  aria-pressed="true">価格順</button>
+    <button class="sort"    id="s-change" onclick="setSort('change',this)" aria-pressed="false">変動率</button>
+    <button class="sort"    id="s-new"    onclick="setSort('new',this)"    aria-pressed="false">新着順</button>
   </div>
 
   <!-- グリッドヘッダー -->
   <div style="display:flex;align-items:center;justify-content:space-between;padding:16px 24px 0">
-    <div class="sec-label" id="gameLabelEl">ポケモンカード</div>
-    <div style="font-family:'JetBrains Mono',monospace;font-size:11px;color:var(--text-muted)" id="countEl">0件</div>
+    <div class="sec" id="gameLabelEl">ポケモンカード</div>
+    <div style="font-family:'JetBrains Mono',monospace;font-size:11px;color:var(--muted)"
+         id="countEl" aria-live="polite">0件</div>
   </div>
 
-  <!-- カードグリッド -->
-  <div class="card-grid" id="gridEl"></div>
+  <!-- ★ カードグリッド（updateView が書き込む） -->
+  <div class="grid" id="gridEl" role="list" aria-label="カード一覧"></div>
 
-</div>
+</main>
 
-<!-- モーダル -->
-<div class="modal-overlay" id="modalOverlay" onclick="onOverlayClick(event)">
-  <div class="modal-box">
-    <button class="modal-close" onclick="closeModal()">✕</button>
-    <div class="modal-title">🔔 価格アラート設定</div>
-    <div class="modal-sub" id="modalSubEl"></div>
+<!-- ═══════════════════════════════════ フッター ════════ -->
+<footer class="footer">
+  <div class="footer-logo">CARD<span style="color:var(--pink)">RADAR</span></div>
+  <nav class="footer-links" aria-label="フッターナビゲーション">
+    <button class="footer-link btn" onclick="openPP()">プライバシーポリシー</button>
+    <button class="footer-link btn" onclick="openAlertModal(null)">価格アラート</button>
+    <a class="footer-link" href="mailto:contact@cardradar.example.com">お問い合わせ</a>
+  </nav>
+  <p class="footer-copy">© 2025 CardRadar — 価格データはダミーです。実際の売買は各サービスでご確認ください。</p>
+</footer>
 
-    <label class="form-lbl">通知価格（円以下）</label>
-    <input type="number" class="form-input" id="alertPriceEl" placeholder="例: 5000" min="0">
+<!-- ══════════════════════════════════════════════════════
+     アラートモーダル
+══════════════════════════════════════════════════════ -->
+<div class="overlay" id="alertOverlay" role="dialog" aria-modal="true" aria-label="価格アラート設定"
+     onclick="onOverlayClick(event,'alertOverlay')">
+  <div class="mbox">
+    <button class="mclose" onclick="closeModal('alertOverlay')" aria-label="閉じる">✕</button>
+    <div class="mtitle">🔔 価格アラート設定</div>
+    <div class="msub" id="alertSubEl"></div>
+
+    <label class="flbl" for="alertPriceEl">通知価格（円以下）</label>
+    <input type="number" class="finp" id="alertPriceEl" placeholder="例: 5000" min="0" aria-required="true">
     <input type="range"  id="priceRangeEl" min="100" max="100000" value="5000"
-           oninput="document.getElementById('alertPriceEl').value=this.value">
-    <div class="range-labels"><span>¥100</span><span>¥100,000</span></div>
+           oninput="document.getElementById('alertPriceEl').value=this.value"
+           aria-label="価格スライダー">
+    <div class="rlabels"><span>¥100</span><span>¥100,000</span></div>
 
-    <label class="form-lbl">対象プラットフォーム</label>
-    <select class="form-select">
-      <option>すべてのサイト</option>
-      <option>メルカリのみ</option>
-      <option>ヤフオクのみ</option>
-      <option>大手ショップのみ</option>
+    <label class="flbl" for="alertPlatEl">対象プラットフォーム</label>
+    <select class="fsel" id="alertPlatEl">
+      <option value="all">すべてのサイト</option>
+      <option value="mercari">メルカリのみ</option>
+      <option value="yahoo">ヤフオクのみ</option>
+      <option value="shop">大手ショップのみ</option>
     </select>
 
-    <label class="form-lbl">通知方法</label>
+    <label class="flbl">通知方法</label>
     <div class="notify-row">
-      <label class="notify-opt">
-        <input type="radio" name="nm" value="email" checked style="accent-color:var(--neon-cyan)">
+      <label class="nopt">
+        <input type="radio" name="notifyM" value="email" checked style="accent-color:var(--cyan)">
         <span>📧 メール</span>
       </label>
-      <label class="notify-opt">
-        <input type="radio" name="nm" value="line" style="accent-color:var(--neon-cyan)">
+      <label class="nopt">
+        <input type="radio" name="notifyM" value="line" style="accent-color:var(--cyan)">
         <span>💬 LINE</span>
       </label>
     </div>
 
-    <label class="form-lbl">メールアドレス</label>
-    <input type="email" class="form-input" id="alertEmailEl" placeholder="your@email.com">
+    <label class="flbl" for="alertEmailEl">メールアドレス</label>
+    <input type="email" class="finp" id="alertEmailEl" placeholder="your@email.com" aria-required="true">
 
-    <button class="submit-btn" onclick="submitAlert()">アラートを登録する →</button>
+    <button class="btn btn-primary" onclick="submitAlert()">アラートを登録する →</button>
   </div>
 </div>
 
 <!-- ══════════════════════════════════════════════════════
-     JavaScript — すべてのロジック
+     プライバシーポリシーモーダル（要件2 AdSense対策）
+══════════════════════════════════════════════════════ -->
+<div class="overlay" id="ppOverlay" role="dialog" aria-modal="true" aria-label="プライバシーポリシー"
+     onclick="onOverlayClick(event,'ppOverlay')">
+  <div class="mbox" style="max-width:640px">
+    <button class="mclose" onclick="closeModal('ppOverlay')" aria-label="閉じる">✕</button>
+    <div class="mtitle">📋 プライバシーポリシー</div>
+    <div class="msub">最終更新日: 2025年1月1日</div>
+
+    <div class="pp-section">
+      <div class="pp-h">広告の配信について（Google AdSense）</div>
+      <p class="pp-p">
+        当サイトでは、第三者配信の広告サービス「Google AdSense（グーグル アドセンス）」を利用しています。
+        Google AdSense では Cookie を使用して、ユーザーが当サイトや他のサイトにアクセスした情報に基づき、
+        適切な広告を表示します。<br>
+        Google が広告 Cookie を使用することにより、ユーザーが当サイトや他のサイトにアクセスした情報に
+        基づいて、Google やそのパートナーが適切な広告を表示します。<br>
+        ユーザーは
+        <a href="https://adssettings.google.com/" target="_blank" rel="noopener noreferrer"
+           style="color:var(--cyan);text-decoration:underline">広告設定</a>
+        で、パーソナライズ広告を無効にすることができます。
+      </p>
+    </div>
+
+    <div class="pp-section">
+      <div class="pp-h">アクセス解析ツールについて</div>
+      <p class="pp-p">
+        当サイトでは、Google Analytics（グーグル アナリティクス）を使用しています。
+        Google Analytics は Cookie を使用してトラフィックデータを収集します。
+        このデータは匿名で収集されており、個人を特定するものではありません。
+        この機能は Cookie を無効にすることで収集を拒否することができます。
+      </p>
+    </div>
+
+    <div class="pp-section">
+      <div class="pp-h">収集する情報</div>
+      <ul class="pp-ul">
+        <li>アクセスしたページのURL・日時</li>
+        <li>使用しているブラウザ・OS の種類</li>
+        <li>IPアドレス（匿名化済み）</li>
+        <li>価格アラート登録時のメールアドレス（サービス提供目的のみに使用）</li>
+      </ul>
+    </div>
+
+    <div class="pp-section">
+      <div class="pp-h">個人情報の第三者提供</div>
+      <p class="pp-p">
+        当サイトは法令に基づく場合を除き、本人の同意なしに個人情報を第三者に提供することはありません。
+      </p>
+    </div>
+
+    <div class="pp-section">
+      <div class="pp-h">免責事項</div>
+      <p class="pp-p">
+        当サイトに掲載されている価格情報はダミーデータです。実際の売買は各プラットフォームの公式サイトでご確認ください。
+        当サイトは価格情報の正確性・完全性を保証するものではありません。
+      </p>
+    </div>
+
+    <div class="pp-section">
+      <div class="pp-h">お問い合わせ</div>
+      <p class="pp-p">
+        プライバシーポリシーに関するご質問は
+        <a href="mailto:privacy@cardradar.example.com"
+           style="color:var(--cyan);text-decoration:underline">privacy@cardradar.example.com</a>
+        までご連絡ください。
+      </p>
+    </div>
+
+    <button class="btn btn-primary" onclick="closeModal('ppOverlay')"
+            style="margin-top:8px">閉じる</button>
+  </div>
+</div>
+
+<!-- ══════════════════════════════════════════════════════
+     JavaScript
 ══════════════════════════════════════════════════════ -->
 <script>
-/* ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-   ① カードデータ（const cards = [...] 形式）
-   将来はここをAPIレスポンスで置き換える
-━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ */
-const cards = [
-  // ─── ポケモン ───────────────────────────────
+"use strict";
+
+/* ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+   ① カードデータ（const cardData = [...] 配列）
+   将来は fetchCardsFromSpreadsheet() 等で差し替え可能
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ */
+const cardData = [
+
+  /* ─── ポケモン (10件) ──────────────────────────── */
   {
-    id:"sv3a-001",  game:"pokemon",
+    id:"sv3a-001", game:"pokemon",
     name:"リザードンex",           set:"黒炎の支配者",        code:"sv3a 001/108",
     emoji:"🦎", rarity:"SAR", rc:"r-sec", hot:true,
     prices:{ mercari:{c:12800,p:14200}, yahoo:{c:13500,p:13200}, shop:{c:15800,p:15800} }
   },
   {
-    id:"sv4k-054",  game:"pokemon",
+    id:"sv4k-054", game:"pokemon",
     name:"ピカチュウex",           set:"古代の咆哮",           code:"sv4k 054/190",
     emoji:"⚡", rarity:"SR",  rc:"r-sr",  hot:false,
-    prices:{ mercari:{c:3200,p:2900},  yahoo:{c:3600,p:3400},  shop:{c:4200,p:4200}  }
+    prices:{ mercari:{c:3200,p:2900},  yahoo:{c:3600,p:3400},  shop:{c:4200,p:4200} }
   },
   {
-    id:"sv2a-086",  game:"pokemon",
-    name:"ミュウex",              set:"ポケモンカード151",     code:"sv2a 086/165",
+    id:"sv2a-086", game:"pokemon",
+    name:"ミュウex",               set:"ポケモンカード151",     code:"sv2a 086/165",
     emoji:"🌟", rarity:"SAR", rc:"r-sec", hot:true,
     prices:{ mercari:{c:18500,p:21000}, yahoo:{c:19200,p:21500}, shop:{c:22800,p:22800} }
   },
   {
-    id:"sv5a-098",  game:"pokemon",
+    id:"sv5a-098", game:"pokemon",
     name:"イーブイヒーローズ SAR", set:"サイバージャッジ",      code:"sv5a 098/071",
     emoji:"🦊", rarity:"UR",  rc:"r-ur",  hot:false,
-    prices:{ mercari:{c:6400,p:6600},  yahoo:{c:6800,p:6800},  shop:{c:7500,p:7200}  }
+    prices:{ mercari:{c:6400,p:6600},  yahoo:{c:6800,p:6800},  shop:{c:7500,p:7200} }
   },
   {
-    id:"sv3a-069",  game:"pokemon",
+    id:"sv3a-069", game:"pokemon",
     name:"ヒスイゾロアークVSTAR", set:"黒炎の支配者",          code:"sv3a 069/108",
     emoji:"🌑", rarity:"SAR", rc:"r-sec", hot:false,
     prices:{ mercari:{c:9200,p:8800},  yahoo:{c:9800,p:9200},  shop:{c:11500,p:11500} }
   },
   {
-    id:"sv1s-200",  game:"pokemon",
+    id:"sv1s-200", game:"pokemon",
     name:"ネストボール SR",        set:"スカーレット",          code:"sv1s 200/198",
     emoji:"🔴", rarity:"SR",  rc:"r-sr",  hot:false,
-    prices:{ mercari:{c:1200,p:1100},  yahoo:{c:1350,p:1300},  shop:{c:1600,p:1600}  }
+    prices:{ mercari:{c:1200,p:1100},  yahoo:{c:1350,p:1300},  shop:{c:1600,p:1600} }
   },
   {
-    id:"sv6-099",   game:"pokemon",
+    id:"sv6-099",  game:"pokemon",
     name:"ゲッコウガex SAR",       set:"ナイトワンダラー",      code:"sv6 099/064",
     emoji:"🌊", rarity:"SAR", rc:"r-sec", hot:true,
     prices:{ mercari:{c:8900,p:9400},  yahoo:{c:9200,p:9800},  shop:{c:11000,p:11000} }
   },
+  {
+    id:"sv8-055",  game:"pokemon",
+    name:"カビゴンex SAR",         set:"超電ブレイカー",        code:"sv8 055/094",
+    emoji:"😴", rarity:"SAR", rc:"r-sec", hot:false,
+    prices:{ mercari:{c:5400,p:5200},  yahoo:{c:5700,p:5600},  shop:{c:6800,p:6800} }
+  },
+  {
+    id:"sv7-001",  game:"pokemon",
+    name:"ルギアex SAR",           set:"ステラミラクル",        code:"sv7 001/102",
+    emoji:"🌀", rarity:"SAR", rc:"r-sec", hot:true,
+    prices:{ mercari:{c:22000,p:25000}, yahoo:{c:23500,p:26000}, shop:{c:28000,p:28000} }
+  },
+  {
+    id:"sv4-200",  game:"pokemon",
+    name:"カイナex SR",            set:"蒼空ストリーム",        code:"sv4 200/098",
+    emoji:"🌊", rarity:"SR",  rc:"r-sr",  hot:false,
+    prices:{ mercari:{c:2100,p:2000},  yahoo:{c:2300,p:2200},  shop:{c:2800,p:2800} }
+  },
 
-  // ─── ワンピース ─────────────────────────────
+  /* ─── ワンピース (10件) ─────────────────────────── */
   {
     id:"op01-016",  game:"onepiece",
-    name:"モンキー・D・ルフィ (SEC)", set:"ROMANCE DAWN",             code:"OP01-016",
+    name:"モンキー・D・ルフィ SEC", set:"ROMANCE DAWN",             code:"OP01-016",
     emoji:"🎩", rarity:"SEC", rc:"r-sec", hot:true,
     prices:{ mercari:{c:32000,p:38000}, yahoo:{c:34500,p:39000}, shop:{c:40000,p:40000} }
   },
   {
     id:"op04-062",  game:"onepiece",
-    name:"ニコ・ロビン SR",          set:"Kingdom of Intrigue",      code:"OP04-062",
+    name:"ニコ・ロビン SR",         set:"Kingdom of Intrigue",      code:"OP04-062",
     emoji:"🌸", rarity:"SR",  rc:"r-sr",  hot:false,
-    prices:{ mercari:{c:4800,p:4500},  yahoo:{c:5200,p:5000},  shop:{c:6000,p:6000}  }
+    prices:{ mercari:{c:4800,p:4500},  yahoo:{c:5200,p:5000},  shop:{c:6000,p:6000} }
   },
   {
     id:"op02-099",  game:"onepiece",
@@ -412,7 +632,7 @@ const cards = [
   },
   {
     id:"op05-119",  game:"onepiece",
-    name:"ロロノア・ゾロ (SEC)",      set:"Awakening of the New Era", code:"OP05-119",
+    name:"ロロノア・ゾロ SEC",       set:"Awakening of the New Era", code:"OP05-119",
     emoji:"⚔️", rarity:"SEC", rc:"r-sec", hot:true,
     prices:{ mercari:{c:45000,p:52000}, yahoo:{c:47000,p:53000}, shop:{c:55000,p:55000} }
   },
@@ -420,13 +640,43 @@ const cards = [
     id:"op06-022",  game:"onepiece",
     name:"ナミ SR",                 set:"Wings of the Captain",     code:"OP06-022",
     emoji:"🍊", rarity:"SR",  rc:"r-sr",  hot:false,
-    prices:{ mercari:{c:3400,p:3200},  yahoo:{c:3700,p:3500},  shop:{c:4500,p:4500}  }
+    prices:{ mercari:{c:3400,p:3200},  yahoo:{c:3700,p:3500},  shop:{c:4500,p:4500} }
+  },
+  {
+    id:"op07-001",  game:"onepiece",
+    name:"ボア・ハンコック SEC",     set:"500年後の未来",            code:"OP07-001",
+    emoji:"👑", rarity:"SEC", rc:"r-sec", hot:true,
+    prices:{ mercari:{c:28000,p:33000}, yahoo:{c:29500,p:34000}, shop:{c:36000,p:36000} }
+  },
+  {
+    id:"op03-077",  game:"onepiece",
+    name:"白ひげ SR",               set:"Pillars of Strength",      code:"OP03-077",
+    emoji:"🏴", rarity:"SR",  rc:"r-sr",  hot:false,
+    prices:{ mercari:{c:6200,p:5900},  yahoo:{c:6500,p:6200},  shop:{c:8000,p:8000} }
+  },
+  {
+    id:"op08-112",  game:"onepiece",
+    name:"シャンクス SEC",           set:"Two Legends",              code:"OP08-112",
+    emoji:"🍶", rarity:"SEC", rc:"r-sec", hot:true,
+    prices:{ mercari:{c:38000,p:44000}, yahoo:{c:40000,p:46000}, shop:{c:48000,p:48000} }
+  },
+  {
+    id:"op04-098",  game:"onepiece",
+    name:"サボ SR",                 set:"Kingdom of Intrigue",      code:"OP04-098",
+    emoji:"🎩", rarity:"SR",  rc:"r-sr",  hot:false,
+    prices:{ mercari:{c:3800,p:3600},  yahoo:{c:4100,p:3900},  shop:{c:5000,p:5000} }
+  },
+  {
+    id:"op09-055",  game:"onepiece",
+    name:"ヤマト SR",               set:"The Four Emperors",        code:"OP09-055",
+    emoji:"⛩️", rarity:"SR",  rc:"r-sr",  hot:false,
+    prices:{ mercari:{c:5100,p:4800},  yahoo:{c:5500,p:5200},  shop:{c:6800,p:6800} }
   },
 
-  // ─── 遊戯王 ─────────────────────────────────
+  /* ─── 遊戯王 (5件) ─────────────────────────────── */
   {
     id:"qccp-001",  game:"yugioh",
-    name:"ブラック・マジシャン UR",         set:"QUARTER CENTURY CHRONICLE", code:"QCCP-JP001",
+    name:"ブラック・マジシャン UR",        set:"QUARTER CENTURY CHRONICLE", code:"QCCP-JP001",
     emoji:"🧙", rarity:"UR",  rc:"r-ur",  hot:true,
     prices:{ mercari:{c:25000,p:28000}, yahoo:{c:26500,p:29000}, shop:{c:32000,p:32000} }
   },
@@ -440,16 +690,22 @@ const cards = [
     id:"phni-030",  game:"yugioh",
     name:"ブラック・マジシャン・ガール SR", set:"PHANTOM NIGHTMARE",         code:"PHNI-JP030",
     emoji:"🌙", rarity:"SR",  rc:"r-sr",  hot:false,
-    prices:{ mercari:{c:3200,p:3100},  yahoo:{c:3500,p:3400},  shop:{c:4200,p:4200}  }
+    prices:{ mercari:{c:3200,p:3100},  yahoo:{c:3500,p:3400},  shop:{c:4200,p:4200} }
   },
   {
     id:"lede-001",  game:"yugioh",
     name:"混沌魔龍 カオス・ルーラー UR",   set:"LEGACY OF DESTRUCTION",     code:"LEDE-JP001",
     emoji:"💜", rarity:"UR",  rc:"r-ur",  hot:false,
-    prices:{ mercari:{c:7200,p:8000},  yahoo:{c:7500,p:8400},  shop:{c:9800,p:9800}  }
+    prices:{ mercari:{c:7200,p:8000},  yahoo:{c:7500,p:8400},  shop:{c:9800,p:9800} }
+  },
+  {
+    id:"rota-001",  game:"yugioh",
+    name:"ラー翼神竜 UR",                  set:"RAGE OF THE ABYSS",         code:"ROTA-JP001",
+    emoji:"☀️", rarity:"UR",  rc:"r-ur",  hot:true,
+    prices:{ mercari:{c:15000,p:17000}, yahoo:{c:15800,p:17500}, shop:{c:19000,p:19000} }
   },
 
-  // ─── ドラゴンボール ─────────────────────────
+  /* ─── ドラゴンボール (3件) ─────────────────────── */
   {
     id:"fb04-001",  game:"dragonball",
     name:"孫悟空 (超サイヤ人4)",        set:"FUSION WORLD FB04", code:"FB04-001",
@@ -460,99 +716,89 @@ const cards = [
     id:"fb03-050",  game:"dragonball",
     name:"ベジータ (超サイヤ人ブルー)", set:"FUSION WORLD FB03", code:"FB03-050",
     emoji:"💎", rarity:"SR",  rc:"r-sr",  hot:false,
-    prices:{ mercari:{c:5400,p:5000},  yahoo:{c:5800,p:5500},  shop:{c:7000,p:7000}  }
+    prices:{ mercari:{c:5400,p:5000},  yahoo:{c:5800,p:5500},  shop:{c:7000,p:7000} }
   },
   {
     id:"fb01-077",  game:"dragonball",
     name:"フリーザ (最終形態) SR",      set:"FUSION WORLD FB01", code:"FB01-077",
     emoji:"❄️", rarity:"SR",  rc:"r-sr",  hot:false,
-    prices:{ mercari:{c:2800,p:3100},  yahoo:{c:3000,p:3300},  shop:{c:3800,p:3800}  }
+    prices:{ mercari:{c:2800,p:3100},  yahoo:{c:3000,p:3300},  shop:{c:3800,p:3800} }
   },
 
-  // ─── ヴァンガード ────────────────────────────
+  /* ─── ヴァンガード (2件) ────────────────────────── */
   {
     id:"vss09-004", game:"cardfight",
     name:"ブラスター・ブレード UR", set:"V Clan Collection Vol.1", code:"V-SS09/004",
     emoji:"⚔", rarity:"UR",  rc:"r-ur",  hot:false,
-    prices:{ mercari:{c:6800,p:7200},  yahoo:{c:7200,p:7500},  shop:{c:8500,p:8500}  }
+    prices:{ mercari:{c:6800,p:7200},  yahoo:{c:7200,p:7500},  shop:{c:8500,p:8500} }
   },
   {
     id:"d-bt01-001",game:"cardfight",
     name:"蒼騎士 アルフレッド SR",  set:"D-Booster Set 01",       code:"D-BT01/001",
     emoji:"🛡️", rarity:"SR",  rc:"r-sr",  hot:true,
-    prices:{ mercari:{c:4200,p:3800},  yahoo:{c:4500,p:4000},  shop:{c:5800,p:5800}  }
+    prices:{ mercari:{c:4200,p:3800},  yahoo:{c:4500,p:4000},  shop:{c:5800,p:5800} }
   },
 ];
 
-/* ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-   ② ゲームメタ
-━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ */
-const GAMES = {
-  pokemon:    { label:"ポケモンカード",                   cls:"tab-cyan"   },
-  onepiece:   { label:"ワンピースカードゲーム",             cls:"tab-pink"   },
-  yugioh:     { label:"遊戯王カード",                     cls:"tab-yellow" },
-  dragonball: { label:"ドラゴンボールスーパーカードゲーム",  cls:"tab-yellow" },
-  cardfight:  { label:"カードファイト!! ヴァンガード",       cls:"tab-cyan"   },
+/* ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+   ② ゲームメタデータ
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ */
+const GAME_META = {
+  pokemon:    { label:"ポケモンカード",                   cls:"tc" },
+  onepiece:   { label:"ワンピースカードゲーム",             cls:"tp" },
+  yugioh:     { label:"遊戯王カード",                     cls:"ty" },
+  dragonball: { label:"ドラゴンボールスーパーカードゲーム",  cls:"ty" },
+  cardfight:  { label:"カードファイト!! ヴァンガード",       cls:"tv" },
 };
+const SITE_LABEL = { mercari:"メルカリ", yahoo:"ヤフオク", shop:"大手ショップ" };
 
-/* ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+/* ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
    ③ アプリ状態
-━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ */
-let state = { game:"pokemon", query:"", sort:"price" };
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ */
+const state = { game:"pokemon", query:"", sort:"price" };
 
-/* ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-   ④ ユーティリティ関数
-━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ */
-const yen = n => '¥' + n.toLocaleString('ja-JP');
+/* ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+   ④ ユーティリティ
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ */
+const yen  = n => '¥' + n.toLocaleString('ja-JP');
 
-// 3サイトの最安値を返す
 function lowest(card) {
   return Math.min(card.prices.mercari.c, card.prices.yahoo.c, card.prices.shop.c);
 }
 
-// 最安値のサイトキーを返す
 function lowestKey(card) {
   const p = card.prices;
   if (p.mercari.c <= p.yahoo.c && p.mercari.c <= p.shop.c) return 'mercari';
-  if (p.yahoo.c   <= p.shop.c)                              return 'yahoo';
-  return 'shop';
+  return p.yahoo.c <= p.shop.c ? 'yahoo' : 'shop';
 }
 
-const SITE_LABEL = { mercari:"メルカリ", yahoo:"ヤフオク", shop:"大手ショップ" };
-
-// 平均変動率 (%)
 function avgChg(card) {
-  const p = card.prices;
+  const p   = card.prices;
   const sum = ['mercari','yahoo','shop'].reduce((a,k) => a + (p[k].c - p[k].p) / p[k].p, 0);
   return (sum / 3 * 100).toFixed(1);
 }
 
-// 変動バッジHTML
 function chgBadge(pct) {
   const n = parseFloat(pct);
-  if (n >  0.3) return `<span class="chg chg-up">▲ ${Math.abs(n)}%</span>`;
-  if (n < -0.3) return `<span class="chg chg-dn">▼ ${Math.abs(n)}%</span>`;
-  return               `<span class="chg chg-fl">→ ${Math.abs(n)}%</span>`;
+  if (n >  0.3) return `<span class="chg cup">▲ ${Math.abs(n)}%</span>`;
+  if (n < -0.3) return `<span class="chg cdn">▼ ${Math.abs(n)}%</span>`;
+  return               `<span class="chg cfl">→ ${Math.abs(n)}%</span>`;
 }
 
-// 価格上昇・下降のCSSクラス
 function priceCls(cur, prev) {
-  if (cur < prev) return 'p-dn';
-  if (cur > prev) return 'p-up';
-  return '';
+  return cur < prev ? 'pdn' : cur > prev ? 'pup' : '';
 }
 
-/* ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+/* ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
    ⑤ フィルター & ソート
-━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ */
-function getCards() {
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ */
+function getFilteredCards() {
   // ─ ゲームで絞り込み（タブ切り替えロジック）
-  let res = cards.filter(c => c.game === state.game);
+  let res = cardData.filter(c => c.game === state.game);
 
   // ─ 検索クエリで絞り込み（検索ロジック）
-  //   カード名 / 型番 / 弾名 を小文字で比較
   const q = state.query.trim().toLowerCase();
-  if (q !== '') {
+  if (q) {
     res = res.filter(c =>
       c.name.toLowerCase().includes(q) ||
       c.code.toLowerCase().includes(q) ||
@@ -568,79 +814,150 @@ function getCards() {
   return res;
 }
 
-/* ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-   ⑥ 1枚分のHTML生成
-━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ */
-function cardHTML(card, idx) {
-  const lk  = lowestKey(card);
-  const lv  = lowest(card);
-  const pct = avgChg(card);
-  const p   = card.prices;
+/* ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+   ⑥ 1枚分 HTML 生成
 
-  return `
-<div class="p-card" style="animation-delay:${idx*55}ms">
-  <div class="card-thumb">
-    ${card.emoji}
-    <span class="rarity-badge ${card.rc}">${card.rarity}</span>
-    ${card.hot ? '<span class="hot-badge">🔥 HOT</span>' : ''}
-  </div>
-  <div class="card-body">
-    <div class="name-row">
-      <div class="card-name">${card.name}</div>
-      ${chgBadge(pct)}
-    </div>
-    <div class="card-code">${card.code}</div>
-    <div class="card-set">${card.set}</div>
-
-    <div class="lowest-block">
-      <div>
-        <div class="lowest-lbl">最安値</div>
-        <div class="lowest-price">${yen(lv)}</div>
-      </div>
-      <div class="lowest-site">${SITE_LABEL[lk]}</div>
-    </div>
-
-    <div class="price-row">
-      <div class="price-cell ${lk==='mercari'?'low':''}">
-        <div class="p-site">メルカリ</div>
-        <div class="p-val ${priceCls(p.mercari.c,p.mercari.p)}">${yen(p.mercari.c)}</div>
-      </div>
-      <div class="price-cell ${lk==='yahoo'?'low':''}">
-        <div class="p-site">ヤフオク</div>
-        <div class="p-val ${priceCls(p.yahoo.c,p.yahoo.p)}">${yen(p.yahoo.c)}</div>
-      </div>
-      <div class="price-cell ${lk==='shop'?'low':''}">
-        <div class="p-site">大手ショップ</div>
-        <div class="p-val ${priceCls(p.shop.c,p.shop.p)}">${yen(p.shop.c)}</div>
-      </div>
-    </div>
-
-    <button class="alert-btn" onclick="openModal('${card.id}')">
-      🔔 価格アラートを設定する
-    </button>
-  </div>
-</div>`;
+   X シェアURL（要件3）
+   フォーマット: https://twitter.com/intent/tweet?text=...&url=...
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ */
+function makeShareURL(card) {
+  const lv   = lowest(card);
+  const text = `${card.name}（${card.code}）の最安値が ${yen(lv)} です！ #CardRadar #トレカ #${card.game}`;
+  return `https://twitter.com/intent/tweet?text=${encodeURIComponent(text)}&url=${encodeURIComponent('https://public-azure-six.vercel.app/')}`;
 }
 
-/* ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-   ⑦ グリッド描画（メイン描画関数）
-━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ */
-function render() {
-  const list = getCards();
-  document.getElementById('gameLabelEl').textContent = GAMES[state.game].label;
+function cardHTML(card, idx) {
+  const lk   = lowestKey(card);
+  const lv   = lowest(card);
+  const pct  = avgChg(card);
+  const p    = card.prices;
+  const share = makeShareURL(card);
+
+  return `
+<article class="pcard" style="animation-delay:${idx*55}ms" role="listitem" aria-label="${card.name}">
+  <div class="thumb">
+    ${card.emoji}
+    <span class="rbadge ${card.rc}" aria-label="レアリティ ${card.rarity}">${card.rarity}</span>
+    ${card.hot ? '<span class="hot" aria-label="注目カード">🔥 HOT</span>' : ''}
+  </div>
+  <div class="cbody">
+    <div class="nrow">
+      <div class="cname">${card.name}</div>
+      ${chgBadge(pct)}
+    </div>
+    <div class="ccode">${card.code}</div>
+    <div class="cset">${card.set}</div>
+
+    <div class="low-block" aria-label="最安値 ${yen(lv)}">
+      <div>
+        <div class="low-lbl">最安値</div>
+        <div class="low-price">${yen(lv)}</div>
+      </div>
+      <div class="low-site">${SITE_LABEL[lk]}</div>
+    </div>
+
+    <div class="prow" aria-label="各サイト価格">
+      <div class="pcell ${lk==='mercari'?'lo':''}">
+        <div class="psite">メルカリ</div>
+        <div class="pval ${priceCls(p.mercari.c,p.mercari.p)}">${yen(p.mercari.c)}</div>
+      </div>
+      <div class="pcell ${lk==='yahoo'?'lo':''}">
+        <div class="psite">ヤフオク</div>
+        <div class="pval ${priceCls(p.yahoo.c,p.yahoo.p)}">${yen(p.yahoo.c)}</div>
+      </div>
+      <div class="pcell ${lk==='shop'?'lo':''}">
+        <div class="psite">大手ショップ</div>
+        <div class="pval ${priceCls(p.shop.c,p.shop.p)}">${yen(p.shop.c)}</div>
+      </div>
+    </div>
+
+    <div class="action-row">
+      <button class="alert-btn" onclick="openAlertModal('${card.id}')"
+              aria-label="${card.name}の価格アラートを設定">
+        🔔 アラート設定
+      </button>
+      <a class="share-btn" href="${share}" target="_blank" rel="noopener noreferrer"
+         aria-label="${card.name}をXでシェア">
+        <svg viewBox="0 0 24 24" aria-hidden="true">
+          <path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-4.714-6.231-5.401 6.231H2.747l7.73-8.835L1.254 2.25H8.08l4.259 5.622L18.244 2.25zm-1.161 17.52h1.833L7.084 4.126H5.117L17.083 19.77z"/>
+        </svg>
+        シェア
+      </a>
+    </div>
+  </div>
+</article>`;
+}
+
+/* ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+   ⑦ updateView（メイン描画関数）
+   ─────────────────────────────────────────────────
+   将来 fetchCardsFromAPI() / fetchFromSpreadsheet() 等の
+   非同期データ取得結果を渡しやすいよう、
+   「データ取得」「フィルタ/ソート」「DOM更新」を分離した設計にしている。
+
+   使い方:
+     updateView()               // 現在の state で再描画
+     updateView(newCards)       // 外部データで cardData を上書きしてから再描画
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ */
+function updateView(newDataArray) {
+  // 外部データが渡されたら差し替え
+  if (Array.isArray(newDataArray)) {
+    cardData.length = 0;
+    newDataArray.forEach(d => cardData.push(d));
+    buildTicker(); // ティッカーも更新
+  }
+
+  const list = getFilteredCards();
+  document.getElementById('gameLabelEl').textContent = GAME_META[state.game].label;
   document.getElementById('countEl').textContent     = `${list.length}件`;
 
   if (list.length === 0) {
-    document.getElementById('gridEl').innerHTML =
-      `<div class="empty-state">「${state.query}」に一致するカードが見つかりませんでした</div>`;
+    document.getElementById('gridEl').innerHTML = `
+      <div class="empty" aria-live="assertive">
+        <span>🔍</span>
+        「${state.query}」に一致するカードが見つかりませんでした
+      </div>`;
     return;
   }
+
   document.getElementById('gridEl').innerHTML = list.map((c,i) => cardHTML(c,i)).join('');
 }
 
-/* ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-   ⑧ イベントハンドラ
-━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ */
+/* ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+   ⑧ 将来のデータ取得サンプル（コメントアウト）
+   ─────────────────────────────────────────────────
+   Google Sheets / API からデータを取得する場合は
+   以下の関数を実装して updateView() に渡す。
+
+   async function fetchFromSpreadsheet() {
+     const SHEET_ID   = 'YOUR_SHEET_ID';
+     const SHEET_NAME = 'cards';
+     const API_KEY    = 'YOUR_API_KEY';
+     const url = `https://sheets.googleapis.com/v4/spreadsheets/${SHEET_ID}/values/${SHEET_NAME}?key=${API_KEY}`;
+     const res    = await fetch(url);
+     const json   = await res.json();
+     const rows   = json.values;            // [["id","game","name",...], ...]
+     const headers = rows[0];
+     return rows.slice(1).map(row => {
+       const obj = {};
+       headers.forEach((h,i) => obj[h] = row[i]);
+       obj.prices = {
+         mercari: { c: +obj.mercari_cur, p: +obj.mercari_prev },
+         yahoo:   { c: +obj.yahoo_cur,   p: +obj.yahoo_prev   },
+         shop:    { c: +obj.shop_cur,    p: +obj.shop_prev     },
+       };
+       return obj;
+     });
+   }
+
+   // 使用例:
+   // const data = await fetchFromSpreadsheet();
+   // updateView(data);
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ */
+
+/* ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+   ⑨ イベントハンドラ
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ */
 
 // タブ切り替え
 function switchGame(btn) {
@@ -648,52 +965,65 @@ function switchGame(btn) {
   state.query = '';
   document.getElementById('searchEl').value = '';
 
-  document.querySelectorAll('.game-tab')
-    .forEach(t => t.classList.remove('tab-cyan','tab-pink','tab-yellow'));
-  btn.classList.add(GAMES[state.game].cls);
+  document.querySelectorAll('.tab').forEach(t => {
+    t.classList.remove('tc','tp','ty','tv');
+    t.setAttribute('aria-selected','false');
+  });
+  btn.classList.add(GAME_META[state.game].cls);
+  btn.setAttribute('aria-selected','true');
 
-  render();
+  updateView();
 }
 
-// 検索（oninput から呼ばれる）
+// 検索
 function onSearch() {
   state.query = document.getElementById('searchEl').value;
-  render();  // 入力のたびに再描画するだけ
+  updateView(); // 入力のたびに再描画
 }
 
 // ソート
 function setSort(type, btn) {
   state.sort = type;
-  document.querySelectorAll('.sort-btn').forEach(b => b.classList.remove('active'));
-  btn.classList.add('active');
-  render();
+  document.querySelectorAll('.sort').forEach(b => {
+    b.classList.remove('on');
+    b.setAttribute('aria-pressed','false');
+  });
+  btn.classList.add('on');
+  btn.setAttribute('aria-pressed','true');
+  updateView();
 }
 
-/* ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-   ⑨ モーダル
-━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ */
-function openModal(cardId) {
-  const overlay = document.getElementById('modalOverlay');
+/* ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+   ⑩ モーダル制御
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ */
+function openModal(id) {
+  document.getElementById(id).classList.add('open');
+  document.body.style.overflow = 'hidden';
+}
+
+function closeModal(id) {
+  document.getElementById(id).classList.remove('open');
+  document.body.style.overflow = '';
+}
+
+function onOverlayClick(e, id) {
+  if (e.target === document.getElementById(id)) closeModal(id);
+}
+
+// アラートモーダル
+function openAlertModal(cardId) {
   if (cardId) {
-    const card = cards.find(c => c.id === cardId);
+    const card = cardData.find(c => c.id === cardId);
     if (card) {
-      document.getElementById('modalSubEl').textContent = `${card.name} — ${card.code}`;
+      document.getElementById('alertSubEl').textContent = `${card.name} — ${card.code}`;
       const sug = Math.round(lowest(card) * 0.85);
       document.getElementById('alertPriceEl').value = sug;
       document.getElementById('priceRangeEl').value = Math.min(sug, 100000);
     }
   } else {
-    document.getElementById('modalSubEl').textContent = '全カード監視モード';
+    document.getElementById('alertSubEl').textContent = '全カード監視モード';
   }
-  overlay.classList.add('open');
-}
-
-function closeModal() {
-  document.getElementById('modalOverlay').classList.remove('open');
-}
-
-function onOverlayClick(e) {
-  if (e.target === document.getElementById('modalOverlay')) closeModal();
+  openModal('alertOverlay');
 }
 
 function submitAlert() {
@@ -701,65 +1031,96 @@ function submitAlert() {
   const price = document.getElementById('alertPriceEl').value;
   if (!email || !price) {
     const el = document.getElementById('alertEmailEl');
-    el.style.borderColor = 'var(--neon-pink)';
+    el.style.borderColor = 'var(--pink)';
+    el.focus();
     setTimeout(() => { el.style.borderColor = ''; }, 2000);
     return;
   }
-  closeModal();
-  toast(`✓ ¥${parseInt(price).toLocaleString()} 以下でアラートを設定しました`);
+  closeModal('alertOverlay');
+  showToast(`✓ ¥${parseInt(price).toLocaleString()} 以下でアラートを設定しました`);
 }
 
-/* ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-   ⑩ ティッカー
-━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ */
+// プライバシーポリシーモーダル
+function openPP() { openModal('ppOverlay'); }
+
+/* ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+   ⑪ ティッカー生成
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ */
 function buildTicker() {
-  const items = cards.map(c => {
+  const items = cardData.map(c => {
     const pct = parseFloat(avgChg(c));
-    const cls = pct > 0.3 ? 't-up' : pct < -0.3 ? 't-dn' : 't-fl';
-    const arr = pct > 0.3 ? '▲' : pct < -0.3 ? '▼' : '→';
-    return `<div class="t-item"><span class="t-name">${c.name}</span> ${yen(lowest(c))} <span class="${cls}">${arr}${Math.abs(pct)}%</span></div>`;
+    const cls = pct >  0.3 ? 'up' : pct < -0.3 ? 'dn' : '';
+    const arr = pct >  0.3 ? '▲' : pct < -0.3 ? '▼' : '→';
+    return `<div class="ti"><span class="n">${c.name}</span> ${yen(lowest(c))} <span class="${cls}">${arr}${Math.abs(pct)}%</span></div>`;
   });
+  // ループのため2セット
   document.getElementById('tickerEl').innerHTML = [...items,...items].join('');
 }
 
-/* ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-   ⑪ 時計 & ライブシミュレーション
-━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ */
-function tick() {
+/* ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+   ⑫ 時計 & ライブシミュレーション
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ */
+function tickClock() {
   const t = new Date().toLocaleTimeString('ja-JP',{hour12:false});
   document.getElementById('clockEl').textContent  = t;
   document.getElementById('updateEl').textContent = t;
 }
 
 function simulateLive() {
-  const card = cards[Math.floor(Math.random() * cards.length)];
-  const keys = ['mercari','yahoo','shop'];
-  const key  = keys[Math.floor(Math.random() * 3)];
-  const old  = card.prices[key].c;
-  const delta = (Math.random() - 0.5) * 0.06;
+  const card  = cardData[Math.floor(Math.random() * cardData.length)];
+  const keys  = ['mercari','yahoo','shop'];
+  const key   = keys[Math.floor(Math.random() * 3)];
+  const old   = card.prices[key].c;
+  const delta = (Math.random() - 0.5) * 0.05;
   card.prices[key].p = old;
   card.prices[key].c = Math.max(100, Math.round(old * (1 + delta)));
-  if (card.game === state.game) render();
+  if (card.game === state.game) updateView();
 }
 
-/* ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-   ⑫ トースト
-━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ */
-function toast(msg) {
+/* ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+   ⑬ トースト
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ */
+function showToast(msg) {
   const el = document.getElementById('toastEl');
   el.textContent = msg;
   el.classList.add('show');
   setTimeout(() => el.classList.remove('show'), 3500);
 }
 
-/* ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-   ⑬ 初期化
-━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ */
-render();                                   // ← カードを最初に描画
-buildTicker();                              // ← ティッカー生成
-tick();                                     // ← 時計即時表示
-setInterval(tick,         1000);            // ← 毎秒更新
-setInterval(simulateLive, 5000);            // ← 5秒ごとライブ価格シミュレーション
+/* ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+   ⑭ URLパラメータから検索クエリを復元（SEO対策）
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ */
+function restoreFromURL() {
+  const params = new URLSearchParams(window.location.search);
+  const q      = params.get('q');
+  const g      = params.get('game');
+  if (g && GAME_META[g]) {
+    state.game = g;
+    document.querySelectorAll('.tab').forEach(t => {
+      t.classList.remove('tc','tp','ty','tv');
+      t.setAttribute('aria-selected','false');
+    });
+    const activeTab = document.querySelector(`.tab[data-game="${g}"]`);
+    if (activeTab) {
+      activeTab.classList.add(GAME_META[g].cls);
+      activeTab.setAttribute('aria-selected','true');
+    }
+  }
+  if (q) {
+    state.query = q;
+    document.getElementById('searchEl').value = q;
+  }
+}
+
+/* ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+   ⑮ 初期化
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ */
+restoreFromURL();          // URLパラメータ復元
+updateView();              // ← カード描画（要件4: updateView関数）
+buildTicker();             // ← ティッカー生成
+tickClock();               // ← 時計即時表示
+setInterval(tickClock,       1000); // 毎秒時計更新
+setInterval(simulateLive,    6000); // 6秒ごと価格シミュレーション
 </script>
 </body>
 </html>
