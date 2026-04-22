@@ -1,0 +1,1347 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>CardRadar — トレカ最安値レーダー</title>
+<script src="https://cdn.tailwindcss.com"></script>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700;900&family=Noto+Sans+JP:wght@300;400;700&family=JetBrains+Mono:wght@400;700&display=swap" rel="stylesheet">
+
+<style>
+  :root {
+    --neon-cyan: #00f5ff;
+    --neon-pink: #ff0080;
+    --neon-yellow: #ffe600;
+    --neon-green: #00ff88;
+    --bg-void: #030712;
+    --bg-deep: #060d1a;
+    --bg-card: #0a1628;
+    --bg-surface: #0f1f35;
+    --border-glow: rgba(0, 245, 255, 0.2);
+    --text-primary: #e2f0ff;
+    --text-muted: #4a7090;
+  }
+
+  * { box-sizing: border-box; }
+
+  body {
+    background-color: var(--bg-void);
+    color: var(--text-primary);
+    font-family: 'Noto Sans JP', sans-serif;
+    min-height: 100vh;
+    overflow-x: hidden;
+  }
+
+  /* Animated grid background */
+  .grid-bg {
+    position: fixed;
+    inset: 0;
+    z-index: 0;
+    background-image:
+      linear-gradient(rgba(0,245,255,0.03) 1px, transparent 1px),
+      linear-gradient(90deg, rgba(0,245,255,0.03) 1px, transparent 1px);
+    background-size: 40px 40px;
+    animation: gridScroll 20s linear infinite;
+  }
+
+  @keyframes gridScroll {
+    from { background-position: 0 0; }
+    to { background-position: 40px 40px; }
+  }
+
+  /* Noise overlay */
+  .noise {
+    position: fixed;
+    inset: 0;
+    z-index: 1;
+    opacity: 0.025;
+    background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
+    background-size: 200px 200px;
+    pointer-events: none;
+  }
+
+  .content { position: relative; z-index: 10; }
+
+  /* Glowing header */
+  .header-logo {
+    font-family: 'Orbitron', monospace;
+    font-weight: 900;
+    letter-spacing: 0.15em;
+    background: linear-gradient(135deg, var(--neon-cyan) 0%, #ffffff 50%, var(--neon-pink) 100%);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+    filter: drop-shadow(0 0 20px rgba(0,245,255,0.5));
+  }
+
+  .header-bar {
+    background: linear-gradient(180deg, rgba(6,13,26,0.98) 0%, rgba(3,7,18,0.95) 100%);
+    border-bottom: 1px solid var(--border-glow);
+    backdrop-filter: blur(20px);
+    box-shadow: 0 4px 40px rgba(0,245,255,0.08);
+  }
+
+  /* Live badge */
+  @keyframes pulse-dot {
+    0%, 100% { opacity: 1; transform: scale(1); }
+    50% { opacity: 0.4; transform: scale(0.8); }
+  }
+
+  .live-dot {
+    width: 8px; height: 8px;
+    background: var(--neon-green);
+    border-radius: 50%;
+    box-shadow: 0 0 8px var(--neon-green);
+    animation: pulse-dot 1.5s ease-in-out infinite;
+  }
+
+  /* Game selector tabs */
+  .game-tab {
+    font-family: 'Orbitron', monospace;
+    font-size: 11px;
+    font-weight: 700;
+    letter-spacing: 0.12em;
+    padding: 10px 20px;
+    border: 1px solid rgba(0,245,255,0.15);
+    border-radius: 4px;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    background: rgba(10,22,40,0.8);
+    color: var(--text-muted);
+    text-transform: uppercase;
+    position: relative;
+    overflow: hidden;
+    white-space: nowrap;
+  }
+
+  .game-tab::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    opacity: 0;
+    transition: opacity 0.2s;
+  }
+
+  .game-tab:hover {
+    border-color: rgba(0,245,255,0.4);
+    color: var(--neon-cyan);
+    box-shadow: 0 0 16px rgba(0,245,255,0.15), inset 0 0 16px rgba(0,245,255,0.05);
+  }
+
+  .game-tab.active {
+    background: rgba(0,245,255,0.08);
+    border-color: var(--neon-cyan);
+    color: var(--neon-cyan);
+    box-shadow: 0 0 20px rgba(0,245,255,0.25), inset 0 0 20px rgba(0,245,255,0.08);
+  }
+
+  .game-tab.active-pink {
+    background: rgba(255,0,128,0.08);
+    border-color: var(--neon-pink);
+    color: var(--neon-pink);
+    box-shadow: 0 0 20px rgba(255,0,128,0.25), inset 0 0 20px rgba(255,0,128,0.08);
+  }
+
+  .game-tab.active-yellow {
+    background: rgba(255,230,0,0.08);
+    border-color: var(--neon-yellow);
+    color: var(--neon-yellow);
+    box-shadow: 0 0 20px rgba(255,230,0,0.25), inset 0 0 20px rgba(255,230,0,0.08);
+  }
+
+  /* Search input */
+  .search-input {
+    background: rgba(10,22,40,0.9);
+    border: 1px solid rgba(0,245,255,0.2);
+    color: var(--text-primary);
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 13px;
+    padding: 10px 16px 10px 40px;
+    border-radius: 4px;
+    transition: all 0.2s;
+    outline: none;
+    width: 100%;
+  }
+
+  .search-input:focus {
+    border-color: var(--neon-cyan);
+    box-shadow: 0 0 20px rgba(0,245,255,0.15);
+  }
+
+  .search-input::placeholder { color: var(--text-muted); }
+
+  /* Card styles */
+  .price-card {
+    background: var(--bg-card);
+    border: 1px solid rgba(0,245,255,0.12);
+    border-radius: 8px;
+    overflow: hidden;
+    transition: all 0.3s ease;
+    position: relative;
+    cursor: pointer;
+  }
+
+  .price-card::before {
+    content: '';
+    position: absolute;
+    top: 0; left: 0; right: 0;
+    height: 1px;
+    background: linear-gradient(90deg, transparent, var(--neon-cyan), transparent);
+    opacity: 0;
+    transition: opacity 0.3s;
+  }
+
+  .price-card:hover {
+    border-color: rgba(0,245,255,0.35);
+    box-shadow: 0 8px 40px rgba(0,245,255,0.1), 0 0 0 1px rgba(0,245,255,0.1);
+    transform: translateY(-2px);
+  }
+
+  .price-card:hover::before { opacity: 1; }
+
+  /* Card image placeholder */
+  .card-img-wrap {
+    position: relative;
+    aspect-ratio: 3/4;
+    overflow: hidden;
+    background: linear-gradient(135deg, #0a1628 0%, #0f1f35 100%);
+  }
+
+  .card-img-wrap img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    transition: transform 0.4s ease;
+  }
+
+  .price-card:hover .card-img-wrap img { transform: scale(1.05); }
+
+  .card-img-placeholder {
+    width: 100%;
+    height: 100%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 42px;
+    background: linear-gradient(135deg, #0a1628 0%, #0f2040 100%);
+  }
+
+  /* Rarity badge */
+  .rarity-badge {
+    position: absolute;
+    top: 8px; right: 8px;
+    font-family: 'Orbitron', monospace;
+    font-size: 9px;
+    font-weight: 700;
+    padding: 3px 8px;
+    border-radius: 2px;
+    letter-spacing: 0.1em;
+  }
+
+  .rarity-ur {
+    background: linear-gradient(135deg, #ffd700, #ff8c00);
+    color: #000;
+    box-shadow: 0 0 12px rgba(255,215,0,0.5);
+  }
+
+  .rarity-sr {
+    background: linear-gradient(135deg, #c0c0c0, #808080);
+    color: #000;
+  }
+
+  .rarity-r {
+    background: linear-gradient(135deg, #4169e1, #1e3a8a);
+    color: #fff;
+  }
+
+  .rarity-sec {
+    background: linear-gradient(135deg, var(--neon-pink), #8b0057);
+    color: #fff;
+    box-shadow: 0 0 12px rgba(255,0,128,0.5);
+  }
+
+  /* Price cells */
+  .price-cell {
+    background: rgba(0,0,0,0.3);
+    border-radius: 4px;
+    padding: 8px 10px;
+    border: 1px solid rgba(255,255,255,0.05);
+  }
+
+  .price-cell .site-name {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 9px;
+    text-transform: uppercase;
+    letter-spacing: 0.1em;
+    color: var(--text-muted);
+    margin-bottom: 2px;
+  }
+
+  .price-cell .price-value {
+    font-family: 'Orbitron', monospace;
+    font-size: 14px;
+    font-weight: 700;
+    color: var(--text-primary);
+  }
+
+  .price-cell.lowest {
+    border-color: rgba(0,255,136,0.3);
+    background: rgba(0,255,136,0.05);
+  }
+
+  .price-cell.lowest .price-value { color: var(--neon-green); }
+
+  /* Change badge */
+  .change-up {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 10px;
+    font-weight: 700;
+    color: var(--neon-pink);
+    background: rgba(255,0,128,0.1);
+    border: 1px solid rgba(255,0,128,0.3);
+    padding: 2px 6px;
+    border-radius: 2px;
+  }
+
+  .change-down {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 10px;
+    font-weight: 700;
+    color: var(--neon-green);
+    background: rgba(0,255,136,0.1);
+    border: 1px solid rgba(0,255,136,0.3);
+    padding: 2px 6px;
+    border-radius: 2px;
+  }
+
+  .change-flat {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 10px;
+    color: var(--text-muted);
+    background: rgba(255,255,255,0.05);
+    border: 1px solid rgba(255,255,255,0.1);
+    padding: 2px 6px;
+    border-radius: 2px;
+  }
+
+  /* Alert price button */
+  .alert-btn {
+    font-family: 'Orbitron', monospace;
+    font-size: 9px;
+    font-weight: 700;
+    letter-spacing: 0.1em;
+    padding: 6px 12px;
+    border-radius: 3px;
+    border: 1px solid rgba(0,245,255,0.3);
+    background: rgba(0,245,255,0.05);
+    color: var(--neon-cyan);
+    cursor: pointer;
+    transition: all 0.2s;
+    text-transform: uppercase;
+  }
+
+  .alert-btn:hover {
+    background: rgba(0,245,255,0.15);
+    border-color: var(--neon-cyan);
+    box-shadow: 0 0 12px rgba(0,245,255,0.2);
+  }
+
+  /* Stats bar */
+  .stats-bar {
+    background: rgba(10,22,40,0.9);
+    border: 1px solid rgba(0,245,255,0.1);
+    border-radius: 6px;
+    padding: 12px 20px;
+  }
+
+  .stat-label {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 9px;
+    text-transform: uppercase;
+    letter-spacing: 0.15em;
+    color: var(--text-muted);
+  }
+
+  .stat-value {
+    font-family: 'Orbitron', monospace;
+    font-weight: 700;
+  }
+
+  /* Modal overlay */
+  .modal-overlay {
+    position: fixed;
+    inset: 0;
+    background: rgba(0,0,0,0.85);
+    backdrop-filter: blur(8px);
+    z-index: 1000;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    opacity: 0;
+    pointer-events: none;
+    transition: opacity 0.3s;
+  }
+
+  .modal-overlay.open {
+    opacity: 1;
+    pointer-events: all;
+  }
+
+  .modal-box {
+    background: var(--bg-deep);
+    border: 1px solid rgba(0,245,255,0.3);
+    border-radius: 8px;
+    padding: 32px;
+    width: 90%;
+    max-width: 480px;
+    box-shadow: 0 0 60px rgba(0,245,255,0.15), 0 0 120px rgba(0,245,255,0.05);
+    transform: translateY(20px);
+    transition: transform 0.3s;
+    position: relative;
+    overflow: hidden;
+  }
+
+  .modal-overlay.open .modal-box { transform: translateY(0); }
+
+  .modal-box::before {
+    content: '';
+    position: absolute;
+    top: 0; left: 0; right: 0;
+    height: 2px;
+    background: linear-gradient(90deg, transparent, var(--neon-cyan), var(--neon-pink), transparent);
+  }
+
+  .modal-title {
+    font-family: 'Orbitron', monospace;
+    font-weight: 900;
+    font-size: 18px;
+    color: var(--neon-cyan);
+    margin-bottom: 4px;
+  }
+
+  .modal-input {
+    width: 100%;
+    background: rgba(0,0,0,0.4);
+    border: 1px solid rgba(0,245,255,0.2);
+    border-radius: 4px;
+    padding: 10px 14px;
+    color: var(--text-primary);
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 13px;
+    outline: none;
+    transition: border-color 0.2s;
+  }
+
+  .modal-input:focus { border-color: var(--neon-cyan); box-shadow: 0 0 12px rgba(0,245,255,0.1); }
+  .modal-input::placeholder { color: var(--text-muted); }
+
+  .modal-select {
+    width: 100%;
+    background: rgba(0,0,0,0.4);
+    border: 1px solid rgba(0,245,255,0.2);
+    border-radius: 4px;
+    padding: 10px 14px;
+    color: var(--text-primary);
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 13px;
+    outline: none;
+    cursor: pointer;
+  }
+
+  .modal-select option { background: var(--bg-deep); }
+
+  .submit-btn {
+    font-family: 'Orbitron', monospace;
+    font-weight: 700;
+    font-size: 12px;
+    letter-spacing: 0.15em;
+    padding: 12px 24px;
+    border-radius: 4px;
+    border: none;
+    background: linear-gradient(135deg, var(--neon-cyan), #0080ff);
+    color: #000;
+    cursor: pointer;
+    transition: all 0.2s;
+    text-transform: uppercase;
+    width: 100%;
+    box-shadow: 0 4px 20px rgba(0,245,255,0.3);
+  }
+
+  .submit-btn:hover {
+    transform: translateY(-1px);
+    box-shadow: 0 8px 30px rgba(0,245,255,0.4);
+  }
+
+  /* Sort button */
+  .sort-btn {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 11px;
+    padding: 7px 14px;
+    border-radius: 3px;
+    border: 1px solid rgba(255,255,255,0.1);
+    background: rgba(255,255,255,0.03);
+    color: var(--text-muted);
+    cursor: pointer;
+    transition: all 0.2s;
+  }
+
+  .sort-btn:hover, .sort-btn.active {
+    border-color: rgba(0,245,255,0.3);
+    color: var(--neon-cyan);
+    background: rgba(0,245,255,0.05);
+  }
+
+  /* Scrollbar */
+  ::-webkit-scrollbar { width: 4px; }
+  ::-webkit-scrollbar-track { background: transparent; }
+  ::-webkit-scrollbar-thumb { background: rgba(0,245,255,0.3); border-radius: 2px; }
+
+  /* Entry animation */
+  @keyframes fadeInUp {
+    from { opacity: 0; transform: translateY(16px); }
+    to { opacity: 1; transform: translateY(0); }
+  }
+
+  .card-enter { animation: fadeInUp 0.4s ease forwards; }
+
+  /* Ticker */
+  .ticker-wrap {
+    overflow: hidden;
+    background: rgba(0,245,255,0.05);
+    border-bottom: 1px solid rgba(0,245,255,0.1);
+  }
+
+  .ticker-content {
+    display: flex;
+    gap: 48px;
+    animation: ticker 30s linear infinite;
+    white-space: nowrap;
+  }
+
+  @keyframes ticker {
+    from { transform: translateX(0); }
+    to { transform: translateX(-50%); }
+  }
+
+  .ticker-item {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 11px;
+    color: var(--text-muted);
+    flex-shrink: 0;
+  }
+
+  .ticker-item span { color: var(--neon-cyan); }
+  .ticker-item .up { color: var(--neon-pink); }
+  .ticker-item .down { color: var(--neon-green); }
+
+  /* Hottest badge */
+  .hot-badge {
+    font-family: 'Orbitron', monospace;
+    font-size: 8px;
+    font-weight: 700;
+    letter-spacing: 0.1em;
+    padding: 2px 6px;
+    border-radius: 2px;
+    background: linear-gradient(135deg, #ff4400, #ff0080);
+    color: #fff;
+    box-shadow: 0 0 8px rgba(255,68,0,0.5);
+  }
+
+  /* Scan line effect on cards */
+  .price-card::after {
+    content: '';
+    position: absolute;
+    top: -100%;
+    left: 0; right: 0;
+    height: 40%;
+    background: linear-gradient(transparent, rgba(0,245,255,0.02), transparent);
+    animation: scanLine 4s linear infinite;
+    pointer-events: none;
+  }
+
+  @keyframes scanLine {
+    from { top: -40%; }
+    to { top: 140%; }
+  }
+
+  .section-label {
+    font-family: 'Orbitron', monospace;
+    font-size: 10px;
+    font-weight: 700;
+    letter-spacing: 0.2em;
+    color: var(--text-muted);
+    text-transform: uppercase;
+    border-left: 2px solid var(--neon-cyan);
+    padding-left: 10px;
+  }
+
+  .toast {
+    position: fixed;
+    bottom: 32px;
+    right: 32px;
+    z-index: 9999;
+    background: var(--bg-surface);
+    border: 1px solid var(--neon-green);
+    border-radius: 6px;
+    padding: 14px 20px;
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 12px;
+    color: var(--neon-green);
+    box-shadow: 0 0 24px rgba(0,255,136,0.2);
+    transform: translateX(120%);
+    transition: transform 0.4s cubic-bezier(0.16,1,0.3,1);
+  }
+
+  .toast.show { transform: translateX(0); }
+
+  /* input range */
+  input[type=range] {
+    -webkit-appearance: none;
+    width: 100%;
+    height: 4px;
+    border-radius: 2px;
+    background: rgba(0,245,255,0.2);
+    outline: none;
+  }
+  input[type=range]::-webkit-slider-thumb {
+    -webkit-appearance: none;
+    width: 16px; height: 16px;
+    border-radius: 50%;
+    background: var(--neon-cyan);
+    cursor: pointer;
+    box-shadow: 0 0 8px var(--neon-cyan);
+  }
+</style>
+</head>
+<body>
+
+<div class="grid-bg"></div>
+<div class="noise"></div>
+
+<!-- Toast notification -->
+<div class="toast" id="toast">✓ アラートを設定しました</div>
+
+<!-- Ticker -->
+<div class="ticker-wrap py-1.5">
+  <div class="ticker-content" id="tickerContent">
+    <!-- populated by JS -->
+  </div>
+</div>
+
+<!-- Header -->
+<header class="header-bar sticky top-0 z-50">
+  <div class="max-w-screen-xl mx-auto px-4 sm:px-6 py-3 flex items-center justify-between">
+    <div class="flex items-center gap-3">
+      <div class="header-logo text-xl sm:text-2xl">CARD<span style="color:var(--neon-pink)">RADAR</span></div>
+      <div class="hidden sm:flex items-center gap-1.5 bg-black/30 px-2.5 py-1 rounded-full border border-green-900/50">
+        <div class="live-dot"></div>
+        <span style="font-family:'JetBrains Mono',monospace;font-size:10px;color:var(--neon-green);letter-spacing:.1em">LIVE</span>
+      </div>
+    </div>
+
+    <div class="flex items-center gap-3">
+      <span style="font-family:'JetBrains Mono',monospace;font-size:10px;color:var(--text-muted)" id="clockDisplay"></span>
+      <button onclick="openModal(null)" class="alert-btn hidden sm:block">
+        + アラート設定
+      </button>
+    </div>
+  </div>
+</header>
+
+<main class="content max-w-screen-xl mx-auto px-4 sm:px-6 py-6 space-y-5">
+
+  <!-- Stats Bar -->
+  <div class="stats-bar flex flex-wrap gap-5">
+    <div>
+      <div class="stat-label">監視カード数</div>
+      <div class="stat-value text-xl" style="color:var(--neon-cyan)">2,847</div>
+    </div>
+    <div class="w-px bg-white/10 hidden sm:block"></div>
+    <div>
+      <div class="stat-label">直近24h 最安値更新</div>
+      <div class="stat-value text-xl" style="color:var(--neon-green)">134件</div>
+    </div>
+    <div class="w-px bg-white/10 hidden sm:block"></div>
+    <div>
+      <div class="stat-label">平均価格変動</div>
+      <div class="stat-value text-xl" style="color:var(--neon-pink)">▲ 3.2%</div>
+    </div>
+    <div class="w-px bg-white/10 hidden sm:block"></div>
+    <div>
+      <div class="stat-label">取引件数 (今日)</div>
+      <div class="stat-value text-xl" style="color:var(--neon-yellow)">18,490</div>
+    </div>
+    <div class="flex-1"></div>
+    <div class="flex items-center gap-2">
+      <span class="stat-label">最終更新</span>
+      <span style="font-family:'JetBrains Mono',monospace;font-size:12px;color:var(--text-primary)" id="lastUpdate">--:--:--</span>
+    </div>
+  </div>
+
+  <!-- Game Selector -->
+  <div>
+    <div class="section-label mb-3">ゲーム選択</div>
+    <div class="flex flex-wrap gap-2" id="gameTabs">
+      <button class="game-tab active" data-game="pokemon" onclick="selectGame('pokemon', this)">⚡ ポケモン</button>
+      <button class="game-tab" data-game="onepiece" onclick="selectGame('onepiece', this)">☠ ワンピース</button>
+      <button class="game-tab" data-game="yugioh" onclick="selectGame('yugioh', this)">👁 遊戯王</button>
+      <button class="game-tab" data-game="dragonball" onclick="selectGame('dragonball', this)">🔮 ドラゴンボール</button>
+      <button class="game-tab" data-game="cardfight" onclick="selectGame('cardfight', this)">⚔ カードファイト!!</button>
+    </div>
+  </div>
+
+  <!-- Search + Sort -->
+  <div class="flex flex-col sm:flex-row gap-3">
+    <div class="relative flex-1">
+      <svg class="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4" style="color:var(--text-muted)" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path></svg>
+      <input type="text" class="search-input" placeholder="カード名・弾・型番で検索... (例: リザードン, sv3a, 001)" id="searchInput" oninput="filterCards()">
+    </div>
+    <div class="flex gap-2">
+      <button class="sort-btn active" id="sortPrice" onclick="sortCards('price')">価格順</button>
+      <button class="sort-btn" id="sortChange" onclick="sortCards('change')">変動率</button>
+      <button class="sort-btn" id="sortNew" onclick="sortCards('new')">新着</button>
+    </div>
+  </div>
+
+  <!-- Card Grid -->
+  <div>
+    <div class="flex items-center justify-between mb-3">
+      <div class="section-label" id="currentGameLabel">ポケモンカード</div>
+      <span style="font-family:'JetBrains Mono',monospace;font-size:11px;color:var(--text-muted)" id="resultCount">0件</span>
+    </div>
+    <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4" id="cardGrid">
+      <!-- JS rendered -->
+    </div>
+  </div>
+
+</main>
+
+<!-- Alert Modal -->
+<div class="modal-overlay" id="modalOverlay" onclick="closeModalOutside(event)">
+  <div class="modal-box">
+    <button onclick="closeModal()" style="position:absolute;top:16px;right:16px;background:none;border:none;color:var(--text-muted);cursor:pointer;font-size:18px">✕</button>
+
+    <div class="modal-title">🔔 価格アラート設定</div>
+    <p style="font-size:12px;color:var(--text-muted);margin-bottom:20px;font-family:'JetBrains Mono',monospace" id="modalCardName">カードを選択してください</p>
+
+    <div class="space-y-4">
+      <div>
+        <label style="font-family:'Orbitron',monospace;font-size:10px;letter-spacing:.1em;color:var(--text-muted);text-transform:uppercase;display:block;margin-bottom:8px">通知価格（円以下）</label>
+        <input type="number" class="modal-input" id="alertPrice" placeholder="例: 5000" min="0">
+        <div class="mt-2">
+          <input type="range" id="priceRange" min="100" max="50000" value="5000" oninput="document.getElementById('alertPrice').value=this.value">
+          <div class="flex justify-between mt-1" style="font-family:'JetBrains Mono',monospace;font-size:9px;color:var(--text-muted)">
+            <span>¥100</span><span>¥50,000</span>
+          </div>
+        </div>
+      </div>
+
+      <div>
+        <label style="font-family:'Orbitron',monospace;font-size:10px;letter-spacing:.1em;color:var(--text-muted);text-transform:uppercase;display:block;margin-bottom:8px">対象プラットフォーム</label>
+        <select class="modal-select" id="alertPlatform">
+          <option value="all">すべてのサイト</option>
+          <option value="mercari">メルカリのみ</option>
+          <option value="yahoo">ヤフオクのみ</option>
+          <option value="shop">大手ショップのみ</option>
+        </select>
+      </div>
+
+      <div>
+        <label style="font-family:'Orbitron',monospace;font-size:10px;letter-spacing:.1em;color:var(--text-muted);text-transform:uppercase;display:block;margin-bottom:8px">通知方法</label>
+        <div class="grid grid-cols-2 gap-2">
+          <label style="display:flex;align-items:center;gap:8px;padding:10px;border:1px solid rgba(0,245,255,0.2);border-radius:4px;cursor:pointer;background:rgba(0,245,255,0.03)">
+            <input type="radio" name="notifyMethod" value="email" checked style="accent-color:var(--neon-cyan)">
+            <span style="font-family:'JetBrains Mono',monospace;font-size:12px">📧 メール</span>
+          </label>
+          <label style="display:flex;align-items:center;gap:8px;padding:10px;border:1px solid rgba(0,245,255,0.2);border-radius:4px;cursor:pointer;background:rgba(0,245,255,0.03)">
+            <input type="radio" name="notifyMethod" value="line" style="accent-color:var(--neon-cyan)">
+            <span style="font-family:'JetBrains Mono',monospace;font-size:12px">💬 LINE</span>
+          </label>
+        </div>
+      </div>
+
+      <div>
+        <label style="font-family:'Orbitron',monospace;font-size:10px;letter-spacing:.1em;color:var(--text-muted);text-transform:uppercase;display:block;margin-bottom:8px">メールアドレス</label>
+        <input type="email" class="modal-input" id="alertEmail" placeholder="your@email.com">
+      </div>
+
+      <button class="submit-btn" onclick="submitAlert()">
+        アラートを登録する →
+      </button>
+    </div>
+  </div>
+</div>
+
+<script>
+// ═══════════════════════════════════════════════════════════════
+//  DATA STRUCTURE — 将来的にAPIスクレイピング結果を流し込む想定
+// ═══════════════════════════════════════════════════════════════
+
+const CARD_DATA = {
+  pokemon: {
+    label: "ポケモンカード",
+    color: "cyan",
+    cards: [
+      {
+        id: "sv3a-001",
+        name: "リザードンex",
+        set: "SV拡張パック「黒炎の支配者」",
+        code: "sv3a 001/108",
+        emoji: "🦎",
+        rarity: "SAR",
+        rarityClass: "rarity-sec",
+        hot: true,
+        prices: {
+          mercari: { current: 12800, prev: 14200 },
+          yahoo:   { current: 13500, prev: 13200 },
+          shop:    { current: 15800, prev: 15800 }
+        }
+      },
+      {
+        id: "sv4k-054",
+        name: "ピカチュウex",
+        set: "SV拡張パック「古代の咆哮」",
+        code: "sv4k 054/190",
+        emoji: "⚡",
+        rarity: "SR",
+        rarityClass: "rarity-sr",
+        hot: false,
+        prices: {
+          mercari: { current: 3200, prev: 2900 },
+          yahoo:   { current: 3600, prev: 3400 },
+          shop:    { current: 4200, prev: 4200 }
+        }
+      },
+      {
+        id: "sv2a-086",
+        name: "ミュウex",
+        set: "SV強化拡張パック「ポケモンカード151」",
+        code: "sv2a 086/165",
+        emoji: "🌟",
+        rarity: "SAR",
+        rarityClass: "rarity-sec",
+        hot: true,
+        prices: {
+          mercari: { current: 18500, prev: 21000 },
+          yahoo:   { current: 19200, prev: 21500 },
+          shop:    { current: 22800, prev: 22800 }
+        }
+      },
+      {
+        id: "sv5a-098",
+        name: "イーブイヒーローズ",
+        set: "SV拡張パック「サイバージャッジ」",
+        code: "sv5a 098/071",
+        emoji: "🦊",
+        rarity: "UR",
+        rarityClass: "rarity-ur",
+        hot: false,
+        prices: {
+          mercari: { current: 6400, prev: 6600 },
+          yahoo:   { current: 6800, prev: 6800 },
+          shop:    { current: 7500, prev: 7200 }
+        }
+      },
+      {
+        id: "sv3a-069",
+        name: "ヒスイゾロアークVSTAR",
+        set: "SV拡張パック「黒炎の支配者」",
+        code: "sv3a 069/108",
+        emoji: "🌑",
+        rarity: "SAR",
+        rarityClass: "rarity-sec",
+        hot: false,
+        prices: {
+          mercari: { current: 9200, prev: 8800 },
+          yahoo:   { current: 9800, prev: 9200 },
+          shop:    { current: 11500, prev: 11500 }
+        }
+      },
+      {
+        id: "sv1s-200",
+        name: "ネストボール",
+        set: "SV拡張パック「スカーレット」",
+        code: "sv1s 200/198",
+        emoji: "🔴",
+        rarity: "SR",
+        rarityClass: "rarity-sr",
+        hot: false,
+        prices: {
+          mercari: { current: 1200, prev: 1100 },
+          yahoo:   { current: 1350, prev: 1300 },
+          shop:    { current: 1600, prev: 1600 }
+        }
+      },
+    ]
+  },
+  onepiece: {
+    label: "ワンピースカード",
+    color: "pink",
+    cards: [
+      {
+        id: "op01-016",
+        name: "モンキー・D・ルフィ",
+        set: "ROMANCE DAWN",
+        code: "OP01-016",
+        emoji: "🎩",
+        rarity: "SEC",
+        rarityClass: "rarity-sec",
+        hot: true,
+        prices: {
+          mercari: { current: 32000, prev: 38000 },
+          yahoo:   { current: 34500, prev: 39000 },
+          shop:    { current: 40000, prev: 40000 }
+        }
+      },
+      {
+        id: "op04-062",
+        name: "ニコ・ロビン",
+        set: "Kingdom of Intrigue",
+        code: "OP04-062",
+        emoji: "🌸",
+        rarity: "SR",
+        rarityClass: "rarity-sr",
+        hot: false,
+        prices: {
+          mercari: { current: 4800, prev: 4500 },
+          yahoo:   { current: 5200, prev: 5000 },
+          shop:    { current: 6000, prev: 6000 }
+        }
+      },
+      {
+        id: "op02-099",
+        name: "ポートガス・D・エース",
+        set: "Paramount War",
+        code: "OP02-099",
+        emoji: "🔥",
+        rarity: "SR",
+        rarityClass: "rarity-sr",
+        hot: true,
+        prices: {
+          mercari: { current: 8900, prev: 7800 },
+          yahoo:   { current: 9200, prev: 8200 },
+          shop:    { current: 11000, prev: 11000 }
+        }
+      },
+      {
+        id: "op05-119",
+        name: "ロロノア・ゾロ",
+        set: "Awakening of the New Era",
+        code: "OP05-119",
+        emoji: "⚔️",
+        rarity: "SEC",
+        rarityClass: "rarity-sec",
+        hot: true,
+        prices: {
+          mercari: { current: 45000, prev: 52000 },
+          yahoo:   { current: 47000, prev: 53000 },
+          shop:    { current: 55000, prev: 55000 }
+        }
+      },
+    ]
+  },
+  yugioh: {
+    label: "遊戯王カード",
+    color: "yellow",
+    cards: [
+      {
+        id: "duel-001",
+        name: "ブラック・マジシャン",
+        set: "QUARTER CENTURY CHRONICLE side:PRIDE",
+        code: "QCCP-JP001",
+        emoji: "🧙",
+        rarity: "UR",
+        rarityClass: "rarity-ur",
+        hot: true,
+        prices: {
+          mercari: { current: 25000, prev: 28000 },
+          yahoo:   { current: 26500, prev: 29000 },
+          shop:    { current: 32000, prev: 32000 }
+        }
+      },
+      {
+        id: "duel-002",
+        name: "青眼の白龍",
+        set: "QUARTER CENTURY CHRONICLE side:PRIDE",
+        code: "QCCP-JP002",
+        emoji: "🐉",
+        rarity: "UR",
+        rarityClass: "rarity-ur",
+        hot: true,
+        prices: {
+          mercari: { current: 38000, prev: 35000 },
+          yahoo:   { current: 39500, prev: 36000 },
+          shop:    { current: 45000, prev: 45000 }
+        }
+      },
+      {
+        id: "duel-003",
+        name: "ブラック・マジシャン・ガール",
+        set: "PHANTOM NIGHTMARE",
+        code: "PHNI-JP030",
+        emoji: "🌙",
+        rarity: "SR",
+        rarityClass: "rarity-sr",
+        hot: false,
+        prices: {
+          mercari: { current: 3200, prev: 3100 },
+          yahoo:   { current: 3500, prev: 3400 },
+          shop:    { current: 4200, prev: 4200 }
+        }
+      },
+    ]
+  },
+  dragonball: {
+    label: "ドラゴンボールスーパーカードゲーム",
+    color: "yellow",
+    cards: [
+      {
+        id: "db-001",
+        name: "孫悟空 (超サイヤ人4)",
+        set: "FUSION WORLD FB04",
+        code: "FB04-001",
+        emoji: "🔱",
+        rarity: "SEC",
+        rarityClass: "rarity-sec",
+        hot: true,
+        prices: {
+          mercari: { current: 18000, prev: 22000 },
+          yahoo:   { current: 19000, prev: 22500 },
+          shop:    { current: 25000, prev: 25000 }
+        }
+      },
+      {
+        id: "db-002",
+        name: "ベジータ (超サイヤ人ブルー)",
+        set: "FUSION WORLD FB03",
+        code: "FB03-050",
+        emoji: "💎",
+        rarity: "SR",
+        rarityClass: "rarity-sr",
+        hot: false,
+        prices: {
+          mercari: { current: 5400, prev: 5000 },
+          yahoo:   { current: 5800, prev: 5500 },
+          shop:    { current: 7000, prev: 7000 }
+        }
+      }
+    ]
+  },
+  cardfight: {
+    label: "カードファイト!! ヴァンガード",
+    color: "cyan",
+    cards: [
+      {
+        id: "cf-001",
+        name: "ブラスター・ブレード",
+        set: "V Clan Collection Vol.1",
+        code: "V-SS09/004",
+        emoji: "⚔",
+        rarity: "UR",
+        rarityClass: "rarity-ur",
+        hot: false,
+        prices: {
+          mercari: { current: 6800, prev: 7200 },
+          yahoo:   { current: 7200, prev: 7500 },
+          shop:    { current: 8500, prev: 8500 }
+        }
+      }
+    ]
+  }
+};
+
+// ═══════════════════════════════════════════════════════════════
+//  State
+// ═══════════════════════════════════════════════════════════════
+
+let currentGame = 'pokemon';
+let currentSort = 'price';
+let searchQuery = '';
+let modalCardId = null;
+
+// ═══════════════════════════════════════════════════════════════
+//  Helpers
+// ═══════════════════════════════════════════════════════════════
+
+function fmt(n) {
+  return '¥' + n.toLocaleString('ja-JP');
+}
+
+function getLowest(prices) {
+  const vals = Object.values(prices);
+  return Math.min(...vals.map(v => v.current));
+}
+
+function getChange(prices) {
+  const curr = Object.values(prices).reduce((a,b)=>a+b.current,0)/3;
+  const prev = Object.values(prices).reduce((a,b)=>a+b.prev,0)/3;
+  return ((curr - prev) / prev * 100).toFixed(1);
+}
+
+function changeBadge(pct) {
+  const n = parseFloat(pct);
+  if (n > 0.5)  return `<span class="change-up">▲ ${Math.abs(n)}%</span>`;
+  if (n < -0.5) return `<span class="change-down">▼ ${Math.abs(n)}%</span>`;
+  return `<span class="change-flat">→ ${Math.abs(n)}%</span>`;
+}
+
+function priceChangeColor(curr, prev) {
+  if (curr < prev) return 'style="color:var(--neon-green)"';
+  if (curr > prev) return 'style="color:var(--neon-pink)"';
+  return '';
+}
+
+// ═══════════════════════════════════════════════════════════════
+//  Render
+// ═══════════════════════════════════════════════════════════════
+
+function renderCards() {
+  const gameData = CARD_DATA[currentGame];
+  let cards = [...gameData.cards];
+
+  // Filter
+  if (searchQuery) {
+    const q = searchQuery.toLowerCase();
+    cards = cards.filter(c =>
+      c.name.toLowerCase().includes(q) ||
+      c.code.toLowerCase().includes(q) ||
+      c.set.toLowerCase().includes(q)
+    );
+  }
+
+  // Sort
+  if (currentSort === 'price') {
+    cards.sort((a,b) => getLowest(a.prices) - getLowest(b.prices));
+  } else if (currentSort === 'change') {
+    cards.sort((a,b) => Math.abs(parseFloat(getChange(b.prices))) - Math.abs(parseFloat(getChange(a.prices))));
+  } else if (currentSort === 'new') {
+    // reverse order = newest first (simulating timestamp)
+    cards.reverse();
+  }
+
+  document.getElementById('resultCount').textContent = `${cards.length}件`;
+  document.getElementById('currentGameLabel').textContent = gameData.label;
+
+  const grid = document.getElementById('cardGrid');
+  grid.innerHTML = '';
+
+  if (cards.length === 0) {
+    grid.innerHTML = `<div class="col-span-4 text-center py-16" style="color:var(--text-muted);font-family:'JetBrains Mono',monospace">該当するカードが見つかりませんでした</div>`;
+    return;
+  }
+
+  cards.forEach((card, i) => {
+    const lowestVal = getLowest(card.prices);
+    const changePct = getChange(card.prices);
+    const p = card.prices;
+
+    // determine lowest platform
+    const lowestKey = Object.entries(p).reduce((a,b) => b[1].current < a[1].current ? b : a)[0];
+
+    const el = document.createElement('div');
+    el.className = 'price-card card-enter';
+    el.style.animationDelay = `${i * 60}ms`;
+    el.style.opacity = '0';
+
+    el.innerHTML = `
+      <div class="card-img-wrap">
+        <div class="card-img-placeholder">${card.emoji}</div>
+        <div class="rarity-badge ${card.rarityClass}">${card.rarity}</div>
+        ${card.hot ? '<div style="position:absolute;top:8px;left:8px" class="hot-badge">🔥 HOT</div>' : ''}
+      </div>
+
+      <div class="p-3 space-y-3">
+        <!-- Card info -->
+        <div>
+          <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:2px">
+            <h3 style="font-weight:700;font-size:14px;line-height:1.2;flex:1">${card.name}</h3>
+            ${changeBadge(changePct)}
+          </div>
+          <div style="font-family:'JetBrains Mono',monospace;font-size:10px;color:var(--text-muted)">${card.code}</div>
+          <div style="font-size:11px;color:var(--text-muted);margin-top:2px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${card.set}</div>
+        </div>
+
+        <!-- Lowest price hero -->
+        <div style="background:rgba(0,255,136,0.06);border:1px solid rgba(0,255,136,0.2);border-radius:5px;padding:8px 10px;display:flex;align-items:center;justify-content:space-between">
+          <div>
+            <div style="font-family:'JetBrains Mono',monospace;font-size:9px;color:var(--neon-green);letter-spacing:.1em;text-transform:uppercase;margin-bottom:1px">最安値</div>
+            <div style="font-family:'Orbitron',monospace;font-size:20px;font-weight:900;color:var(--neon-green)">${fmt(lowestVal)}</div>
+          </div>
+          <div style="font-family:'JetBrains Mono',monospace;font-size:10px;color:var(--text-muted);text-align:right">
+            ${lowestKey === 'mercari' ? 'メルカリ' : lowestKey === 'yahoo' ? 'ヤフオク' : '大手ショップ'}
+          </div>
+        </div>
+
+        <!-- Price breakdown -->
+        <div class="grid grid-cols-3 gap-1.5">
+          <div class="price-cell ${lowestKey === 'mercari' ? 'lowest' : ''}">
+            <div class="site-name">メルカリ</div>
+            <div class="price-value" ${priceChangeColor(p.mercari.current, p.mercari.prev)}>${fmt(p.mercari.current)}</div>
+          </div>
+          <div class="price-cell ${lowestKey === 'yahoo' ? 'lowest' : ''}">
+            <div class="site-name">ヤフオク</div>
+            <div class="price-value" ${priceChangeColor(p.yahoo.current, p.yahoo.prev)}>${fmt(p.yahoo.current)}</div>
+          </div>
+          <div class="price-cell ${lowestKey === 'shop' ? 'lowest' : ''}">
+            <div class="site-name">大手ショップ</div>
+            <div class="price-value" ${priceChangeColor(p.shop.current, p.shop.prev)}>${fmt(p.shop.current)}</div>
+          </div>
+        </div>
+
+        <!-- Alert button -->
+        <button class="alert-btn w-full" onclick="openModal('${card.id}')">
+          🔔 価格アラートを設定する
+        </button>
+      </div>
+    `;
+
+    grid.appendChild(el);
+    // Trigger reflow for animation
+    requestAnimationFrame(() => { el.style.opacity = ''; });
+  });
+}
+
+// ═══════════════════════════════════════════════════════════════
+//  Game selection
+// ═══════════════════════════════════════════════════════════════
+
+const gameColors = {
+  pokemon: 'active',
+  onepiece: 'active-pink',
+  yugioh: 'active-yellow',
+  dragonball: 'active-yellow',
+  cardfight: 'active'
+};
+
+function selectGame(game, btn) {
+  currentGame = game;
+  document.querySelectorAll('.game-tab').forEach(t => {
+    t.classList.remove('active', 'active-pink', 'active-yellow');
+  });
+  btn.classList.add(gameColors[game] || 'active');
+  renderCards();
+}
+
+// ═══════════════════════════════════════════════════════════════
+//  Search & Sort
+// ═══════════════════════════════════════════════════════════════
+
+function filterCards() {
+  searchQuery = document.getElementById('searchInput').value;
+  renderCards();
+}
+
+function sortCards(type) {
+  currentSort = type;
+  document.querySelectorAll('.sort-btn').forEach(b => b.classList.remove('active'));
+  document.getElementById('sort' + type.charAt(0).toUpperCase() + type.slice(1)).classList.add('active');
+  renderCards();
+}
+
+// ═══════════════════════════════════════════════════════════════
+//  Modal
+// ═══════════════════════════════════════════════════════════════
+
+function openModal(cardId) {
+  modalCardId = cardId;
+  const overlay = document.getElementById('modalOverlay');
+
+  if (cardId) {
+    const allCards = Object.values(CARD_DATA).flatMap(g => g.cards);
+    const card = allCards.find(c => c.id === cardId);
+    if (card) {
+      document.getElementById('modalCardName').textContent = `${card.name} — ${card.code}`;
+      document.getElementById('alertPrice').value = Math.round(getLowest(card.prices) * 0.85);
+      document.getElementById('priceRange').value = Math.round(getLowest(card.prices) * 0.85);
+    }
+  } else {
+    document.getElementById('modalCardName').textContent = '全カード監視モード';
+  }
+
+  overlay.classList.add('open');
+}
+
+function closeModal() {
+  document.getElementById('modalOverlay').classList.remove('open');
+}
+
+function closeModalOutside(e) {
+  if (e.target === document.getElementById('modalOverlay')) closeModal();
+}
+
+function submitAlert() {
+  const email = document.getElementById('alertEmail').value;
+  const price = document.getElementById('alertPrice').value;
+  if (!email || !price) {
+    document.getElementById('alertEmail').style.borderColor = 'var(--neon-pink)';
+    setTimeout(() => { document.getElementById('alertEmail').style.borderColor = ''; }, 2000);
+    return;
+  }
+  closeModal();
+  showToast(`✓ ¥${parseInt(price).toLocaleString()} 以下でアラートを設定しました`);
+}
+
+function showToast(msg) {
+  const t = document.getElementById('toast');
+  t.textContent = msg;
+  t.classList.add('show');
+  setTimeout(() => t.classList.remove('show'), 3500);
+}
+
+// ═══════════════════════════════════════════════════════════════
+//  Ticker
+// ═══════════════════════════════════════════════════════════════
+
+function buildTicker() {
+  const items = Object.values(CARD_DATA).flatMap(g =>
+    g.cards.map(c => {
+      const chg = parseFloat(getChange(c.prices));
+      const cls = chg > 0 ? 'up' : chg < 0 ? 'down' : '';
+      const arrow = chg > 0 ? '▲' : chg < 0 ? '▼' : '→';
+      return `<div class="ticker-item">${c.name} <span>${fmt(getLowest(c.prices))}</span> <span class="${cls}">${arrow}${Math.abs(chg)}%</span></div>`;
+    })
+  );
+  const doubled = [...items, ...items];
+  document.getElementById('tickerContent').innerHTML = doubled.join('');
+}
+
+// ═══════════════════════════════════════════════════════════════
+//  Clock & Update
+// ═══════════════════════════════════════════════════════════════
+
+function updateClock() {
+  const now = new Date();
+  const s = now.toLocaleTimeString('ja-JP', { hour12: false });
+  document.getElementById('clockDisplay').textContent = s;
+  document.getElementById('lastUpdate').textContent = s;
+}
+
+// Simulate live price updates
+function simulateUpdates() {
+  const allGames = Object.keys(CARD_DATA);
+  const game = allGames[Math.floor(Math.random() * allGames.length)];
+  const cards = CARD_DATA[game].cards;
+  if (!cards.length) return;
+  const card = cards[Math.floor(Math.random() * cards.length)];
+  const platforms = ['mercari', 'yahoo', 'shop'];
+  const platform = platforms[Math.floor(Math.random() * platforms.length)];
+  const delta = (Math.random() - 0.5) * 0.06;
+  const old = card.prices[platform].current;
+  card.prices[platform].prev = old;
+  card.prices[platform].current = Math.max(100, Math.round(old * (1 + delta)));
+  if (game === currentGame) renderCards();
+}
+
+// ═══════════════════════════════════════════════════════════════
+//  Init
+// ═══════════════════════════════════════════════════════════════
+
+renderCards();
+buildTicker();
+updateClock();
+setInterval(updateClock, 1000);
+setInterval(simulateUpdates, 5000); // simulate live updates every 5s
+</script>
+</body>
+</html>
