@@ -5,1260 +5,686 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>CardRadar — トレカ最安値レーダー</title>
 <script src="https://cdn.tailwindcss.com"></script>
-<link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700;900&family=Noto+Sans+JP:wght@300;400;700&family=JetBrains+Mono:wght@400;700&display=swap" rel="stylesheet">
-
 <style>
-  :root {
-    --neon-cyan: #00f5ff;
-    --neon-pink: #ff0080;
-    --neon-yellow: #ffe600;
-    --neon-green: #00ff88;
-    --bg-void: #030712;
-    --bg-deep: #060d1a;
-    --bg-card: #0a1628;
-    --bg-surface: #0f1f35;
-    --border-glow: rgba(0, 245, 255, 0.2);
-    --text-primary: #e2f0ff;
-    --text-muted: #4a7090;
-  }
-
-  * { box-sizing: border-box; }
-
-  body {
-    background-color: var(--bg-void);
-    color: var(--text-primary);
-    font-family: 'Noto Sans JP', sans-serif;
-    min-height: 100vh;
-    overflow-x: hidden;
-  }
-
-  /* Animated grid background */
-  .grid-bg {
-    position: fixed;
-    inset: 0;
-    z-index: 0;
-    background-image:
-      linear-gradient(rgba(0,245,255,0.03) 1px, transparent 1px),
-      linear-gradient(90deg, rgba(0,245,255,0.03) 1px, transparent 1px);
-    background-size: 40px 40px;
-    animation: gridScroll 20s linear infinite;
-  }
-
-  @keyframes gridScroll {
-    from { background-position: 0 0; }
-    to { background-position: 40px 40px; }
-  }
-
-  /* Noise overlay */
-  .noise {
-    position: fixed;
-    inset: 0;
-    z-index: 1;
-    opacity: 0.025;
-    background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
-    background-size: 200px 200px;
-    pointer-events: none;
-  }
-
-  .content { position: relative; z-index: 10; }
-
-  /* Glowing header */
-  .header-logo {
-    font-family: 'Orbitron', monospace;
-    font-weight: 900;
-    letter-spacing: 0.15em;
-    background: linear-gradient(135deg, var(--neon-cyan) 0%, #ffffff 50%, var(--neon-pink) 100%);
-    -webkit-background-clip: text;
-    -webkit-text-fill-color: transparent;
-    background-clip: text;
-    filter: drop-shadow(0 0 20px rgba(0,245,255,0.5));
-  }
-
-  .header-bar {
-    background: linear-gradient(180deg, rgba(6,13,26,0.98) 0%, rgba(3,7,18,0.95) 100%);
-    border-bottom: 1px solid var(--border-glow);
-    backdrop-filter: blur(20px);
-    box-shadow: 0 4px 40px rgba(0,245,255,0.08);
-  }
-
-  /* Live badge */
-  @keyframes pulse-dot {
-    0%, 100% { opacity: 1; transform: scale(1); }
-    50% { opacity: 0.4; transform: scale(0.8); }
-  }
-
-  .live-dot {
-    width: 8px; height: 8px;
-    background: var(--neon-green);
-    border-radius: 50%;
-    box-shadow: 0 0 8px var(--neon-green);
-    animation: pulse-dot 1.5s ease-in-out infinite;
-  }
-
-  /* Game selector tabs */
-  .game-tab {
-    font-family: 'Orbitron', monospace;
-    font-size: 11px;
-    font-weight: 700;
-    letter-spacing: 0.12em;
-    padding: 10px 20px;
-    border: 1px solid rgba(0,245,255,0.15);
-    border-radius: 4px;
-    cursor: pointer;
-    transition: all 0.2s ease;
-    background: rgba(10,22,40,0.8);
-    color: var(--text-muted);
-    text-transform: uppercase;
-    position: relative;
-    overflow: hidden;
-    white-space: nowrap;
-  }
-
-  .game-tab::before {
-    content: '';
-    position: absolute;
-    inset: 0;
-    opacity: 0;
-    transition: opacity 0.2s;
-  }
-
-  .game-tab:hover {
-    border-color: rgba(0,245,255,0.4);
-    color: var(--neon-cyan);
-    box-shadow: 0 0 16px rgba(0,245,255,0.15), inset 0 0 16px rgba(0,245,255,0.05);
-  }
-
-  .game-tab.active {
-    background: rgba(0,245,255,0.08);
-    border-color: var(--neon-cyan);
-    color: var(--neon-cyan);
-    box-shadow: 0 0 20px rgba(0,245,255,0.25), inset 0 0 20px rgba(0,245,255,0.08);
-  }
-
-  .game-tab.active-pink {
-    background: rgba(255,0,128,0.08);
-    border-color: var(--neon-pink);
-    color: var(--neon-pink);
-    box-shadow: 0 0 20px rgba(255,0,128,0.25), inset 0 0 20px rgba(255,0,128,0.08);
-  }
-
-  .game-tab.active-yellow {
-    background: rgba(255,230,0,0.08);
-    border-color: var(--neon-yellow);
-    color: var(--neon-yellow);
-    box-shadow: 0 0 20px rgba(255,230,0,0.25), inset 0 0 20px rgba(255,230,0,0.08);
-  }
-
-  /* Search input */
-  .search-input {
-    background: rgba(10,22,40,0.9);
-    border: 1px solid rgba(0,245,255,0.2);
-    color: var(--text-primary);
-    font-family: 'JetBrains Mono', monospace;
-    font-size: 13px;
-    padding: 10px 16px 10px 40px;
-    border-radius: 4px;
-    transition: all 0.2s;
-    outline: none;
-    width: 100%;
-  }
-
-  .search-input:focus {
-    border-color: var(--neon-cyan);
-    box-shadow: 0 0 20px rgba(0,245,255,0.15);
-  }
-
-  .search-input::placeholder { color: var(--text-muted); }
-
-  /* Card styles */
-  .price-card {
-    background: var(--bg-card);
-    border: 1px solid rgba(0,245,255,0.12);
-    border-radius: 8px;
-    overflow: hidden;
-    transition: all 0.3s ease;
-    position: relative;
-    cursor: pointer;
-  }
-
-  .price-card::before {
-    content: '';
-    position: absolute;
-    top: 0; left: 0; right: 0;
-    height: 1px;
-    background: linear-gradient(90deg, transparent, var(--neon-cyan), transparent);
-    opacity: 0;
-    transition: opacity 0.3s;
-  }
-
-  .price-card:hover {
-    border-color: rgba(0,245,255,0.35);
-    box-shadow: 0 8px 40px rgba(0,245,255,0.1), 0 0 0 1px rgba(0,245,255,0.1);
-    transform: translateY(-2px);
-  }
-
-  .price-card:hover::before { opacity: 1; }
-
-  /* Card image placeholder */
-  .card-img-wrap {
-    position: relative;
-    aspect-ratio: 3/4;
-    overflow: hidden;
-    background: linear-gradient(135deg, #0a1628 0%, #0f1f35 100%);
-  }
-
-  .card-img-wrap img {
-    width: 100%;
-    height: 100%;
-    object-fit: cover;
-    transition: transform 0.4s ease;
-  }
-
-  .price-card:hover .card-img-wrap img { transform: scale(1.05); }
-
-  .card-img-placeholder {
-    width: 100%;
-    height: 100%;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    font-size: 42px;
-    background: linear-gradient(135deg, #0a1628 0%, #0f2040 100%);
-  }
-
-  /* Rarity badge */
-  .rarity-badge {
-    position: absolute;
-    top: 8px; right: 8px;
-    font-family: 'Orbitron', monospace;
-    font-size: 9px;
-    font-weight: 700;
-    padding: 3px 8px;
-    border-radius: 2px;
-    letter-spacing: 0.1em;
-  }
-
-  .rarity-ur {
-    background: linear-gradient(135deg, #ffd700, #ff8c00);
-    color: #000;
-    box-shadow: 0 0 12px rgba(255,215,0,0.5);
-  }
-
-  .rarity-sr {
-    background: linear-gradient(135deg, #c0c0c0, #808080);
-    color: #000;
-  }
-
-  .rarity-r {
-    background: linear-gradient(135deg, #4169e1, #1e3a8a);
-    color: #fff;
-  }
-
-  .rarity-sec {
-    background: linear-gradient(135deg, var(--neon-pink), #8b0057);
-    color: #fff;
-    box-shadow: 0 0 12px rgba(255,0,128,0.5);
-  }
-
-  /* Price cells */
-  .price-cell {
-    background: rgba(0,0,0,0.3);
-    border-radius: 4px;
-    padding: 8px 10px;
-    border: 1px solid rgba(255,255,255,0.05);
-  }
-
-  .price-cell .site-name {
-    font-family: 'JetBrains Mono', monospace;
-    font-size: 9px;
-    text-transform: uppercase;
-    letter-spacing: 0.1em;
-    color: var(--text-muted);
-    margin-bottom: 2px;
-  }
-
-  .price-cell .price-value {
-    font-family: 'Orbitron', monospace;
-    font-size: 14px;
-    font-weight: 700;
-    color: var(--text-primary);
-  }
-
-  .price-cell.lowest {
-    border-color: rgba(0,255,136,0.3);
-    background: rgba(0,255,136,0.05);
-  }
-
-  .price-cell.lowest .price-value { color: var(--neon-green); }
-
-  /* Change badge */
-  .change-up {
-    font-family: 'JetBrains Mono', monospace;
-    font-size: 10px;
-    font-weight: 700;
-    color: var(--neon-pink);
-    background: rgba(255,0,128,0.1);
-    border: 1px solid rgba(255,0,128,0.3);
-    padding: 2px 6px;
-    border-radius: 2px;
-  }
-
-  .change-down {
-    font-family: 'JetBrains Mono', monospace;
-    font-size: 10px;
-    font-weight: 700;
-    color: var(--neon-green);
-    background: rgba(0,255,136,0.1);
-    border: 1px solid rgba(0,255,136,0.3);
-    padding: 2px 6px;
-    border-radius: 2px;
-  }
-
-  .change-flat {
-    font-family: 'JetBrains Mono', monospace;
-    font-size: 10px;
-    color: var(--text-muted);
-    background: rgba(255,255,255,0.05);
-    border: 1px solid rgba(255,255,255,0.1);
-    padding: 2px 6px;
-    border-radius: 2px;
-  }
-
-  /* Alert price button */
-  .alert-btn {
-    font-family: 'Orbitron', monospace;
-    font-size: 9px;
-    font-weight: 700;
-    letter-spacing: 0.1em;
-    padding: 6px 12px;
-    border-radius: 3px;
-    border: 1px solid rgba(0,245,255,0.3);
-    background: rgba(0,245,255,0.05);
-    color: var(--neon-cyan);
-    cursor: pointer;
-    transition: all 0.2s;
-    text-transform: uppercase;
-  }
-
-  .alert-btn:hover {
-    background: rgba(0,245,255,0.15);
-    border-color: var(--neon-cyan);
-    box-shadow: 0 0 12px rgba(0,245,255,0.2);
-  }
-
-  /* Stats bar */
-  .stats-bar {
-    background: rgba(10,22,40,0.9);
-    border: 1px solid rgba(0,245,255,0.1);
-    border-radius: 6px;
-    padding: 12px 20px;
-  }
-
-  .stat-label {
-    font-family: 'JetBrains Mono', monospace;
-    font-size: 9px;
-    text-transform: uppercase;
-    letter-spacing: 0.15em;
-    color: var(--text-muted);
-  }
-
-  .stat-value {
-    font-family: 'Orbitron', monospace;
-    font-weight: 700;
-  }
-
-  /* Modal overlay */
-  .modal-overlay {
-    position: fixed;
-    inset: 0;
-    background: rgba(0,0,0,0.85);
-    backdrop-filter: blur(8px);
-    z-index: 1000;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    opacity: 0;
-    pointer-events: none;
-    transition: opacity 0.3s;
-  }
-
-  .modal-overlay.open {
-    opacity: 1;
-    pointer-events: all;
-  }
-
-  .modal-box {
-    background: var(--bg-deep);
-    border: 1px solid rgba(0,245,255,0.3);
-    border-radius: 8px;
-    padding: 32px;
-    width: 90%;
-    max-width: 480px;
-    box-shadow: 0 0 60px rgba(0,245,255,0.15), 0 0 120px rgba(0,245,255,0.05);
-    transform: translateY(20px);
-    transition: transform 0.3s;
-    position: relative;
-    overflow: hidden;
-  }
-
-  .modal-overlay.open .modal-box { transform: translateY(0); }
-
-  .modal-box::before {
-    content: '';
-    position: absolute;
-    top: 0; left: 0; right: 0;
-    height: 2px;
-    background: linear-gradient(90deg, transparent, var(--neon-cyan), var(--neon-pink), transparent);
-  }
-
-  .modal-title {
-    font-family: 'Orbitron', monospace;
-    font-weight: 900;
-    font-size: 18px;
-    color: var(--neon-cyan);
-    margin-bottom: 4px;
-  }
-
-  .modal-input {
-    width: 100%;
-    background: rgba(0,0,0,0.4);
-    border: 1px solid rgba(0,245,255,0.2);
-    border-radius: 4px;
-    padding: 10px 14px;
-    color: var(--text-primary);
-    font-family: 'JetBrains Mono', monospace;
-    font-size: 13px;
-    outline: none;
-    transition: border-color 0.2s;
-  }
-
-  .modal-input:focus { border-color: var(--neon-cyan); box-shadow: 0 0 12px rgba(0,245,255,0.1); }
-  .modal-input::placeholder { color: var(--text-muted); }
-
-  .modal-select {
-    width: 100%;
-    background: rgba(0,0,0,0.4);
-    border: 1px solid rgba(0,245,255,0.2);
-    border-radius: 4px;
-    padding: 10px 14px;
-    color: var(--text-primary);
-    font-family: 'JetBrains Mono', monospace;
-    font-size: 13px;
-    outline: none;
-    cursor: pointer;
-  }
-
-  .modal-select option { background: var(--bg-deep); }
-
-  .submit-btn {
-    font-family: 'Orbitron', monospace;
-    font-weight: 700;
-    font-size: 12px;
-    letter-spacing: 0.15em;
-    padding: 12px 24px;
-    border-radius: 4px;
-    border: none;
-    background: linear-gradient(135deg, var(--neon-cyan), #0080ff);
-    color: #000;
-    cursor: pointer;
-    transition: all 0.2s;
-    text-transform: uppercase;
-    width: 100%;
-    box-shadow: 0 4px 20px rgba(0,245,255,0.3);
-  }
-
-  .submit-btn:hover {
-    transform: translateY(-1px);
-    box-shadow: 0 8px 30px rgba(0,245,255,0.4);
-  }
-
-  /* Sort button */
-  .sort-btn {
-    font-family: 'JetBrains Mono', monospace;
-    font-size: 11px;
-    padding: 7px 14px;
-    border-radius: 3px;
-    border: 1px solid rgba(255,255,255,0.1);
-    background: rgba(255,255,255,0.03);
-    color: var(--text-muted);
-    cursor: pointer;
-    transition: all 0.2s;
-  }
-
-  .sort-btn:hover, .sort-btn.active {
-    border-color: rgba(0,245,255,0.3);
-    color: var(--neon-cyan);
-    background: rgba(0,245,255,0.05);
-  }
-
-  /* Scrollbar */
-  ::-webkit-scrollbar { width: 4px; }
-  ::-webkit-scrollbar-track { background: transparent; }
-  ::-webkit-scrollbar-thumb { background: rgba(0,245,255,0.3); border-radius: 2px; }
-
-  /* Entry animation */
-  @keyframes fadeInUp {
-    from { opacity: 0; transform: translateY(16px); }
-    to { opacity: 1; transform: translateY(0); }
-  }
-
-  .card-enter { animation: fadeInUp 0.4s ease forwards; }
-
-  /* Ticker */
-  .ticker-wrap {
-    overflow: hidden;
-    background: rgba(0,245,255,0.05);
-    border-bottom: 1px solid rgba(0,245,255,0.1);
-  }
-
-  .ticker-content {
-    display: flex;
-    gap: 48px;
-    animation: ticker 30s linear infinite;
-    white-space: nowrap;
-  }
-
-  @keyframes ticker {
-    from { transform: translateX(0); }
-    to { transform: translateX(-50%); }
-  }
-
-  .ticker-item {
-    font-family: 'JetBrains Mono', monospace;
-    font-size: 11px;
-    color: var(--text-muted);
-    flex-shrink: 0;
-  }
-
-  .ticker-item span { color: var(--neon-cyan); }
-  .ticker-item .up { color: var(--neon-pink); }
-  .ticker-item .down { color: var(--neon-green); }
-
-  /* Hottest badge */
-  .hot-badge {
-    font-family: 'Orbitron', monospace;
-    font-size: 8px;
-    font-weight: 700;
-    letter-spacing: 0.1em;
-    padding: 2px 6px;
-    border-radius: 2px;
-    background: linear-gradient(135deg, #ff4400, #ff0080);
-    color: #fff;
-    box-shadow: 0 0 8px rgba(255,68,0,0.5);
-  }
-
-  /* Scan line effect on cards */
-  .price-card::after {
-    content: '';
-    position: absolute;
-    top: -100%;
-    left: 0; right: 0;
-    height: 40%;
-    background: linear-gradient(transparent, rgba(0,245,255,0.02), transparent);
-    animation: scanLine 4s linear infinite;
-    pointer-events: none;
-  }
-
-  @keyframes scanLine {
-    from { top: -40%; }
-    to { top: 140%; }
-  }
-
-  .section-label {
-    font-family: 'Orbitron', monospace;
-    font-size: 10px;
-    font-weight: 700;
-    letter-spacing: 0.2em;
-    color: var(--text-muted);
-    text-transform: uppercase;
-    border-left: 2px solid var(--neon-cyan);
-    padding-left: 10px;
-  }
-
-  .toast {
-    position: fixed;
-    bottom: 32px;
-    right: 32px;
-    z-index: 9999;
-    background: var(--bg-surface);
-    border: 1px solid var(--neon-green);
-    border-radius: 6px;
-    padding: 14px 20px;
-    font-family: 'JetBrains Mono', monospace;
-    font-size: 12px;
-    color: var(--neon-green);
-    box-shadow: 0 0 24px rgba(0,255,136,0.2);
-    transform: translateX(120%);
-    transition: transform 0.4s cubic-bezier(0.16,1,0.3,1);
-  }
-
-  .toast.show { transform: translateX(0); }
-
-  /* input range */
-  input[type=range] {
-    -webkit-appearance: none;
-    width: 100%;
-    height: 4px;
-    border-radius: 2px;
-    background: rgba(0,245,255,0.2);
-    outline: none;
-  }
-  input[type=range]::-webkit-slider-thumb {
-    -webkit-appearance: none;
-    width: 16px; height: 16px;
-    border-radius: 50%;
-    background: var(--neon-cyan);
-    cursor: pointer;
-    box-shadow: 0 0 8px var(--neon-cyan);
-  }
+:root {
+  --neon-cyan:  #00f5ff;
+  --neon-pink:  #ff0080;
+  --neon-green: #00ff88;
+  --neon-yellow:#ffe600;
+  --bg-void:    #030712;
+  --bg-deep:    #060d1a;
+  --bg-card:    #0a1628;
+  --bg-surface: #0f1f35;
+  --text-main:  #e2f0ff;
+  --text-muted: #4a7090;
+}
+*{box-sizing:border-box;margin:0;padding:0;}
+body{background:var(--bg-void);color:var(--text-main);font-family:'Noto Sans JP',sans-serif;min-height:100vh;overflow-x:hidden;}
+
+/* ── 背景グリッド ── */
+.grid-bg{position:fixed;inset:0;z-index:0;pointer-events:none;
+  background-image:linear-gradient(rgba(0,245,255,.03) 1px,transparent 1px),
+                   linear-gradient(90deg,rgba(0,245,255,.03) 1px,transparent 1px);
+  background-size:40px 40px;animation:gridMove 20s linear infinite;}
+@keyframes gridMove{to{background-position:40px 40px;}}
+.noise{position:fixed;inset:0;z-index:1;opacity:.02;pointer-events:none;
+  background-image:url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
+  background-size:200px;}
+.wrap{position:relative;z-index:10;}
+
+/* ── ティッカー ── */
+.ticker-bar{background:rgba(0,245,255,.04);border-bottom:1px solid rgba(0,245,255,.1);padding:6px 0;overflow:hidden;}
+.ticker-inner{display:flex;gap:48px;white-space:nowrap;animation:ticker 40s linear infinite;}
+.ticker-inner:hover{animation-play-state:paused;}
+@keyframes ticker{from{transform:translateX(0);}to{transform:translateX(-50%);}}
+.t-item{font-family:'JetBrains Mono',monospace;font-size:11px;color:var(--text-muted);flex-shrink:0;}
+.t-name{color:var(--text-main);}
+.t-up{color:var(--neon-pink);}
+.t-dn{color:var(--neon-green);}
+.t-fl{color:var(--text-muted);}
+
+/* ── ヘッダー ── */
+.header{background:linear-gradient(180deg,rgba(6,13,26,.98),rgba(3,7,18,.95));
+  border-bottom:1px solid rgba(0,245,255,.18);backdrop-filter:blur(20px);
+  position:sticky;top:0;z-index:50;padding:12px 24px;
+  display:flex;align-items:center;justify-content:space-between;}
+.logo{font-family:'Orbitron',monospace;font-weight:900;font-size:22px;letter-spacing:.15em;
+  background:linear-gradient(135deg,var(--neon-cyan) 0%,#fff 50%,var(--neon-pink) 100%);
+  -webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;
+  filter:drop-shadow(0 0 18px rgba(0,245,255,.45));}
+.live-badge{display:flex;align-items:center;gap:6px;background:rgba(0,0,0,.3);
+  padding:4px 10px;border-radius:99px;border:1px solid rgba(0,255,136,.25);}
+.live-dot{width:7px;height:7px;border-radius:50%;background:var(--neon-green);
+  box-shadow:0 0 8px var(--neon-green);animation:blink 1.5s ease-in-out infinite;}
+@keyframes blink{50%{opacity:.3;transform:scale(.8);}}
+.live-txt{font-family:'JetBrains Mono',monospace;font-size:10px;color:var(--neon-green);letter-spacing:.1em;}
+.clock-txt{font-family:'JetBrains Mono',monospace;font-size:11px;color:var(--text-muted);}
+.hdr-btn{font-family:'Orbitron',monospace;font-size:9px;font-weight:700;letter-spacing:.12em;
+  padding:8px 16px;border-radius:4px;border:1px solid rgba(0,245,255,.35);
+  background:rgba(0,245,255,.06);color:var(--neon-cyan);cursor:pointer;transition:.2s;text-transform:uppercase;}
+.hdr-btn:hover{background:rgba(0,245,255,.15);box-shadow:0 0 14px rgba(0,245,255,.25);}
+
+/* ── 統計バー ── */
+.stats-row{display:flex;flex-wrap:wrap;gap:20px;align-items:center;
+  background:rgba(10,22,40,.9);border:1px solid rgba(0,245,255,.1);
+  border-radius:8px;padding:14px 22px;margin:20px 24px 0;}
+.stat-lbl{font-family:'JetBrains Mono',monospace;font-size:9px;text-transform:uppercase;
+  letter-spacing:.15em;color:var(--text-muted);margin-bottom:2px;}
+.stat-val{font-family:'Orbitron',monospace;font-weight:700;font-size:18px;}
+.stat-div{width:1px;height:32px;background:rgba(255,255,255,.08);}
+.stat-spacer{flex:1;}
+
+/* ── セクションラベル ── */
+.sec-label{font-family:'Orbitron',monospace;font-size:10px;font-weight:700;
+  letter-spacing:.2em;color:var(--text-muted);text-transform:uppercase;
+  border-left:2px solid var(--neon-cyan);padding-left:10px;}
+
+/* ── ゲームタブ ── */
+.game-tab{font-family:'Orbitron',monospace;font-size:11px;font-weight:700;letter-spacing:.1em;
+  padding:9px 18px;border-radius:4px;cursor:pointer;transition:.2s;user-select:none;
+  border:1px solid rgba(0,245,255,.15);background:rgba(10,22,40,.8);
+  color:var(--text-muted);text-transform:uppercase;white-space:nowrap;}
+.game-tab:hover{border-color:rgba(0,245,255,.4);color:var(--neon-cyan);}
+.game-tab.tab-cyan  {border-color:var(--neon-cyan);color:var(--neon-cyan);background:rgba(0,245,255,.07);box-shadow:0 0 18px rgba(0,245,255,.2);}
+.game-tab.tab-pink  {border-color:var(--neon-pink);color:var(--neon-pink);background:rgba(255,0,128,.07);box-shadow:0 0 18px rgba(255,0,128,.2);}
+.game-tab.tab-yellow{border-color:var(--neon-yellow);color:var(--neon-yellow);background:rgba(255,230,0,.07);box-shadow:0 0 18px rgba(255,230,0,.2);}
+
+/* ── 検索 + ソート ── */
+.search-wrap{position:relative;flex:1;min-width:220px;}
+.search-icon{position:absolute;left:12px;top:50%;transform:translateY(-50%);
+  color:var(--text-muted);pointer-events:none;width:16px;height:16px;}
+.search-input{width:100%;background:rgba(10,22,40,.9);border:1px solid rgba(0,245,255,.2);
+  color:var(--text-main);font-family:'JetBrains Mono',monospace;font-size:13px;
+  padding:10px 14px 10px 38px;border-radius:4px;outline:none;transition:.2s;}
+.search-input:focus{border-color:var(--neon-cyan);box-shadow:0 0 16px rgba(0,245,255,.12);}
+.search-input::placeholder{color:var(--text-muted);}
+.sort-btn{font-family:'JetBrains Mono',monospace;font-size:11px;padding:8px 14px;
+  border-radius:3px;border:1px solid rgba(255,255,255,.1);background:rgba(255,255,255,.03);
+  color:var(--text-muted);cursor:pointer;transition:.2s;}
+.sort-btn:hover,.sort-btn.active{border-color:rgba(0,245,255,.35);color:var(--neon-cyan);background:rgba(0,245,255,.06);}
+
+/* ── カードグリッド ── */
+.card-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(240px,1fr));gap:16px;padding:12px 24px 48px;}
+@keyframes fadeUp{from{opacity:0;transform:translateY(14px);}to{opacity:1;transform:translateY(0);}}
+
+/* ── 価格カード ── */
+.p-card{background:var(--bg-card);border:1px solid rgba(0,245,255,.12);border-radius:8px;
+  overflow:hidden;transition:.3s;cursor:pointer;position:relative;animation:fadeUp .4s ease both;}
+.p-card::before{content:'';position:absolute;top:0;left:0;right:0;height:1px;
+  background:linear-gradient(90deg,transparent,var(--neon-cyan),transparent);opacity:0;transition:.3s;}
+.p-card:hover{border-color:rgba(0,245,255,.38);box-shadow:0 8px 36px rgba(0,245,255,.1);transform:translateY(-2px);}
+.p-card:hover::before{opacity:1;}
+
+.card-thumb{aspect-ratio:3/4;background:linear-gradient(135deg,#0a1628,#0f2040);
+  display:flex;align-items:center;justify-content:center;font-size:52px;position:relative;overflow:hidden;}
+.card-thumb::after{content:'';position:absolute;top:-50%;left:0;right:0;height:50%;
+  background:linear-gradient(transparent,rgba(0,245,255,.025),transparent);
+  animation:scan 3.5s linear infinite;}
+@keyframes scan{to{top:150%;}}
+
+.rarity-badge{position:absolute;top:8px;right:8px;font-family:'Orbitron',monospace;
+  font-size:9px;font-weight:700;padding:3px 8px;border-radius:2px;letter-spacing:.1em;}
+.r-sec{background:linear-gradient(135deg,var(--neon-pink),#8b0057);color:#fff;box-shadow:0 0 10px rgba(255,0,128,.5);}
+.r-ur {background:linear-gradient(135deg,#ffd700,#ff8c00);color:#000;box-shadow:0 0 10px rgba(255,215,0,.4);}
+.r-sr {background:linear-gradient(135deg,#c0c0c0,#808080);color:#000;}
+.r-r  {background:linear-gradient(135deg,#4169e1,#1e3a8a);color:#fff;}
+.hot-badge{position:absolute;top:8px;left:8px;font-family:'Orbitron',monospace;font-size:8px;
+  font-weight:700;padding:2px 6px;border-radius:2px;letter-spacing:.08em;
+  background:linear-gradient(135deg,#ff4400,#ff0080);color:#fff;box-shadow:0 0 8px rgba(255,68,0,.5);}
+
+.card-body{padding:12px;}
+.card-name{font-weight:700;font-size:14px;line-height:1.3;}
+.card-code{font-family:'JetBrains Mono',monospace;font-size:10px;color:var(--text-muted);}
+.card-set {font-size:11px;color:var(--text-muted);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;margin-bottom:10px;}
+.name-row{display:flex;align-items:flex-start;justify-content:space-between;gap:6px;margin-bottom:2px;}
+
+.chg{font-family:'JetBrains Mono',monospace;font-size:10px;font-weight:700;padding:2px 6px;border-radius:2px;flex-shrink:0;}
+.chg-up{color:var(--neon-pink);background:rgba(255,0,128,.1);border:1px solid rgba(255,0,128,.3);}
+.chg-dn{color:var(--neon-green);background:rgba(0,255,136,.1);border:1px solid rgba(0,255,136,.3);}
+.chg-fl{color:var(--text-muted);background:rgba(255,255,255,.05);border:1px solid rgba(255,255,255,.1);}
+
+.lowest-block{background:rgba(0,255,136,.06);border:1px solid rgba(0,255,136,.2);
+  border-radius:5px;padding:8px 10px;display:flex;align-items:center;justify-content:space-between;margin-bottom:8px;}
+.lowest-lbl{font-family:'JetBrains Mono',monospace;font-size:9px;color:var(--neon-green);letter-spacing:.1em;text-transform:uppercase;margin-bottom:2px;}
+.lowest-price{font-family:'Orbitron',monospace;font-size:20px;font-weight:900;color:var(--neon-green);}
+.lowest-site{font-family:'JetBrains Mono',monospace;font-size:10px;color:var(--text-muted);text-align:right;}
+
+.price-row{display:grid;grid-template-columns:repeat(3,1fr);gap:5px;margin-bottom:10px;}
+.price-cell{background:rgba(0,0,0,.28);border:1px solid rgba(255,255,255,.05);border-radius:4px;padding:7px 8px;}
+.price-cell.low{border-color:rgba(0,255,136,.3);background:rgba(0,255,136,.05);}
+.p-site{font-family:'JetBrains Mono',monospace;font-size:8px;text-transform:uppercase;letter-spacing:.08em;color:var(--text-muted);margin-bottom:2px;}
+.p-val{font-family:'Orbitron',monospace;font-size:12px;font-weight:700;}
+.p-up{color:var(--neon-pink);}
+.p-dn{color:var(--neon-green);}
+
+.alert-btn{width:100%;font-family:'Orbitron',monospace;font-size:9px;font-weight:700;
+  letter-spacing:.1em;padding:8px;border-radius:3px;border:1px solid rgba(0,245,255,.3);
+  background:rgba(0,245,255,.05);color:var(--neon-cyan);cursor:pointer;transition:.2s;text-transform:uppercase;}
+.alert-btn:hover{background:rgba(0,245,255,.15);box-shadow:0 0 12px rgba(0,245,255,.2);}
+
+.empty-state{grid-column:1/-1;text-align:center;padding:60px 20px;
+  font-family:'JetBrains Mono',monospace;font-size:13px;color:var(--text-muted);}
+
+/* ── モーダル ── */
+.modal-overlay{position:fixed;inset:0;background:rgba(0,0,0,.85);backdrop-filter:blur(8px);
+  z-index:1000;display:flex;align-items:center;justify-content:center;
+  opacity:0;pointer-events:none;transition:opacity .3s;}
+.modal-overlay.open{opacity:1;pointer-events:all;}
+.modal-box{background:var(--bg-deep);border:1px solid rgba(0,245,255,.3);border-radius:8px;
+  padding:32px;width:90%;max-width:460px;position:relative;overflow:hidden;
+  transform:translateY(20px);transition:transform .3s;box-shadow:0 0 60px rgba(0,245,255,.12);}
+.modal-overlay.open .modal-box{transform:translateY(0);}
+.modal-box::before{content:'';position:absolute;top:0;left:0;right:0;height:2px;
+  background:linear-gradient(90deg,transparent,var(--neon-cyan),var(--neon-pink),transparent);}
+.modal-close{position:absolute;top:14px;right:16px;background:none;border:none;
+  color:var(--text-muted);cursor:pointer;font-size:18px;line-height:1;}
+.modal-title{font-family:'Orbitron',monospace;font-weight:900;font-size:17px;color:var(--neon-cyan);margin-bottom:4px;}
+.modal-sub{font-family:'JetBrains Mono',monospace;font-size:11px;color:var(--text-muted);margin-bottom:22px;}
+.form-lbl{font-family:'Orbitron',monospace;font-size:9px;letter-spacing:.12em;
+  color:var(--text-muted);text-transform:uppercase;display:block;margin-bottom:7px;}
+.form-input{width:100%;background:rgba(0,0,0,.4);border:1px solid rgba(0,245,255,.2);
+  border-radius:4px;padding:10px 13px;color:var(--text-main);
+  font-family:'JetBrains Mono',monospace;font-size:13px;outline:none;transition:.2s;margin-bottom:16px;}
+.form-input:focus{border-color:var(--neon-cyan);box-shadow:0 0 12px rgba(0,245,255,.1);}
+.form-input::placeholder{color:var(--text-muted);}
+.form-select{width:100%;background:rgba(0,0,0,.4);border:1px solid rgba(0,245,255,.2);
+  border-radius:4px;padding:10px 13px;color:var(--text-main);
+  font-family:'JetBrains Mono',monospace;font-size:13px;outline:none;cursor:pointer;margin-bottom:16px;}
+.form-select option{background:var(--bg-deep);}
+.notify-row{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:16px;}
+.notify-opt{display:flex;align-items:center;gap:8px;padding:10px;
+  border:1px solid rgba(0,245,255,.2);border-radius:4px;cursor:pointer;background:rgba(0,245,255,.03);}
+.notify-opt span{font-family:'JetBrains Mono',monospace;font-size:12px;}
+input[type=range]{-webkit-appearance:none;width:100%;height:4px;border-radius:2px;
+  background:rgba(0,245,255,.2);outline:none;margin-bottom:4px;}
+input[type=range]::-webkit-slider-thumb{-webkit-appearance:none;width:16px;height:16px;
+  border-radius:50%;background:var(--neon-cyan);cursor:pointer;box-shadow:0 0 8px var(--neon-cyan);}
+.range-labels{display:flex;justify-content:space-between;font-family:'JetBrains Mono',monospace;
+  font-size:9px;color:var(--text-muted);margin-bottom:16px;}
+.submit-btn{width:100%;font-family:'Orbitron',monospace;font-weight:700;font-size:11px;
+  letter-spacing:.15em;padding:13px;border-radius:4px;border:none;
+  background:linear-gradient(135deg,var(--neon-cyan),#0080ff);color:#000;cursor:pointer;
+  transition:.2s;text-transform:uppercase;box-shadow:0 4px 20px rgba(0,245,255,.3);}
+.submit-btn:hover{transform:translateY(-1px);box-shadow:0 8px 28px rgba(0,245,255,.4);}
+
+/* ── トースト ── */
+.toast{position:fixed;bottom:28px;right:28px;z-index:9999;
+  background:var(--bg-deep);border:1px solid var(--neon-green);border-radius:6px;
+  padding:13px 18px;font-family:'JetBrains Mono',monospace;font-size:12px;color:var(--neon-green);
+  box-shadow:0 0 24px rgba(0,255,136,.2);transform:translateX(130%);transition:transform .4s cubic-bezier(.16,1,.3,1);}
+.toast.show{transform:translateX(0);}
+
+::-webkit-scrollbar{width:4px;}
+::-webkit-scrollbar-thumb{background:rgba(0,245,255,.3);border-radius:2px;}
 </style>
 </head>
 <body>
 
 <div class="grid-bg"></div>
 <div class="noise"></div>
+<div class="toast" id="toastEl"></div>
 
-<!-- Toast notification -->
-<div class="toast" id="toast">✓ アラートを設定しました</div>
-
-<!-- Ticker -->
-<div class="ticker-wrap py-1.5">
-  <div class="ticker-content" id="tickerContent">
-    <!-- populated by JS -->
-  </div>
+<!-- ティッカー -->
+<div class="ticker-bar">
+  <div class="ticker-inner" id="tickerEl"></div>
 </div>
 
-<!-- Header -->
-<header class="header-bar sticky top-0 z-50">
-  <div class="max-w-screen-xl mx-auto px-4 sm:px-6 py-3 flex items-center justify-between">
-    <div class="flex items-center gap-3">
-      <div class="header-logo text-xl sm:text-2xl">CARD<span style="color:var(--neon-pink)">RADAR</span></div>
-      <div class="hidden sm:flex items-center gap-1.5 bg-black/30 px-2.5 py-1 rounded-full border border-green-900/50">
-        <div class="live-dot"></div>
-        <span style="font-family:'JetBrains Mono',monospace;font-size:10px;color:var(--neon-green);letter-spacing:.1em">LIVE</span>
-      </div>
-    </div>
-
-    <div class="flex items-center gap-3">
-      <span style="font-family:'JetBrains Mono',monospace;font-size:10px;color:var(--text-muted)" id="clockDisplay"></span>
-      <button onclick="openModal(null)" class="alert-btn hidden sm:block">
-        + アラート設定
-      </button>
-    </div>
+<!-- ヘッダー -->
+<header class="header">
+  <div style="display:flex;align-items:center;gap:12px">
+    <div class="logo">CARD<span style="color:var(--neon-pink)">RADAR</span></div>
+    <div class="live-badge"><div class="live-dot"></div><span class="live-txt">LIVE</span></div>
+  </div>
+  <div style="display:flex;align-items:center;gap:16px">
+    <span class="clock-txt" id="clockEl"></span>
+    <button class="hdr-btn" onclick="openModal(null)">+ アラート設定</button>
   </div>
 </header>
 
-<main class="content max-w-screen-xl mx-auto px-4 sm:px-6 py-6 space-y-5">
+<div class="wrap">
 
-  <!-- Stats Bar -->
-  <div class="stats-bar flex flex-wrap gap-5">
-    <div>
-      <div class="stat-label">監視カード数</div>
-      <div class="stat-value text-xl" style="color:var(--neon-cyan)">2,847</div>
-    </div>
-    <div class="w-px bg-white/10 hidden sm:block"></div>
-    <div>
-      <div class="stat-label">直近24h 最安値更新</div>
-      <div class="stat-value text-xl" style="color:var(--neon-green)">134件</div>
-    </div>
-    <div class="w-px bg-white/10 hidden sm:block"></div>
-    <div>
-      <div class="stat-label">平均価格変動</div>
-      <div class="stat-value text-xl" style="color:var(--neon-pink)">▲ 3.2%</div>
-    </div>
-    <div class="w-px bg-white/10 hidden sm:block"></div>
-    <div>
-      <div class="stat-label">取引件数 (今日)</div>
-      <div class="stat-value text-xl" style="color:var(--neon-yellow)">18,490</div>
-    </div>
-    <div class="flex-1"></div>
-    <div class="flex items-center gap-2">
-      <span class="stat-label">最終更新</span>
-      <span style="font-family:'JetBrains Mono',monospace;font-size:12px;color:var(--text-primary)" id="lastUpdate">--:--:--</span>
+  <!-- 統計バー -->
+  <div class="stats-row">
+    <div><div class="stat-lbl">監視カード数</div><div class="stat-val" style="color:var(--neon-cyan)">2,847</div></div>
+    <div class="stat-div"></div>
+    <div><div class="stat-lbl">24h 最安値更新</div><div class="stat-val" style="color:var(--neon-green)">134件</div></div>
+    <div class="stat-div"></div>
+    <div><div class="stat-lbl">平均価格変動</div><div class="stat-val" style="color:var(--neon-pink)">▲ 3.2%</div></div>
+    <div class="stat-div"></div>
+    <div><div class="stat-lbl">今日の取引数</div><div class="stat-val" style="color:var(--neon-yellow)">18,490</div></div>
+    <div class="stat-spacer"></div>
+    <div style="text-align:right">
+      <div class="stat-lbl">最終更新</div>
+      <div style="font-family:'JetBrains Mono',monospace;font-size:12px" id="updateEl">--:--:--</div>
     </div>
   </div>
 
-  <!-- Game Selector -->
-  <div>
-    <div class="section-label mb-3">ゲーム選択</div>
-    <div class="flex flex-wrap gap-2" id="gameTabs">
-      <button class="game-tab active" data-game="pokemon" onclick="selectGame('pokemon', this)">⚡ ポケモン</button>
-      <button class="game-tab" data-game="onepiece" onclick="selectGame('onepiece', this)">☠ ワンピース</button>
-      <button class="game-tab" data-game="yugioh" onclick="selectGame('yugioh', this)">👁 遊戯王</button>
-      <button class="game-tab" data-game="dragonball" onclick="selectGame('dragonball', this)">🔮 ドラゴンボール</button>
-      <button class="game-tab" data-game="cardfight" onclick="selectGame('cardfight', this)">⚔ カードファイト!!</button>
+  <!-- ゲームタブ -->
+  <div style="padding:20px 24px 0">
+    <div class="sec-label" style="margin-bottom:12px">ゲーム選択</div>
+    <div style="display:flex;flex-wrap:wrap;gap:8px">
+      <button class="game-tab tab-cyan"  data-game="pokemon"    onclick="switchGame(this)">⚡ ポケモン</button>
+      <button class="game-tab"           data-game="onepiece"   onclick="switchGame(this)">☠ ワンピース</button>
+      <button class="game-tab"           data-game="yugioh"     onclick="switchGame(this)">👁 遊戯王</button>
+      <button class="game-tab"           data-game="dragonball" onclick="switchGame(this)">🔮 ドラゴンボール</button>
+      <button class="game-tab"           data-game="cardfight"  onclick="switchGame(this)">⚔ ヴァンガード</button>
     </div>
   </div>
 
-  <!-- Search + Sort -->
-  <div class="flex flex-col sm:flex-row gap-3">
-    <div class="relative flex-1">
-      <svg class="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4" style="color:var(--text-muted)" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path></svg>
-      <input type="text" class="search-input" placeholder="カード名・弾・型番で検索... (例: リザードン, sv3a, 001)" id="searchInput" oninput="filterCards()">
+  <!-- 検索 + ソート -->
+  <div style="display:flex;flex-wrap:wrap;gap:10px;padding:16px 24px 0;align-items:center">
+    <div class="search-wrap">
+      <svg class="search-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/>
+      </svg>
+      <input type="text" id="searchEl" class="search-input"
+        placeholder="カード名・型番・弾名で検索... 例: リザードン / sv3a"
+        oninput="onSearch()">
     </div>
-    <div class="flex gap-2">
-      <button class="sort-btn active" id="sortPrice" onclick="sortCards('price')">価格順</button>
-      <button class="sort-btn" id="sortChange" onclick="sortCards('change')">変動率</button>
-      <button class="sort-btn" id="sortNew" onclick="sortCards('new')">新着</button>
-    </div>
+    <button class="sort-btn active" id="s-price"  onclick="setSort('price',this)">価格順</button>
+    <button class="sort-btn"        id="s-change" onclick="setSort('change',this)">変動率</button>
+    <button class="sort-btn"        id="s-new"    onclick="setSort('new',this)">新着順</button>
   </div>
 
-  <!-- Card Grid -->
-  <div>
-    <div class="flex items-center justify-between mb-3">
-      <div class="section-label" id="currentGameLabel">ポケモンカード</div>
-      <span style="font-family:'JetBrains Mono',monospace;font-size:11px;color:var(--text-muted)" id="resultCount">0件</span>
-    </div>
-    <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4" id="cardGrid">
-      <!-- JS rendered -->
-    </div>
+  <!-- グリッドヘッダー -->
+  <div style="display:flex;align-items:center;justify-content:space-between;padding:16px 24px 0">
+    <div class="sec-label" id="gameLabelEl">ポケモンカード</div>
+    <div style="font-family:'JetBrains Mono',monospace;font-size:11px;color:var(--text-muted)" id="countEl">0件</div>
   </div>
 
-</main>
+  <!-- カードグリッド -->
+  <div class="card-grid" id="gridEl"></div>
 
-<!-- Alert Modal -->
-<div class="modal-overlay" id="modalOverlay" onclick="closeModalOutside(event)">
+</div>
+
+<!-- モーダル -->
+<div class="modal-overlay" id="modalOverlay" onclick="onOverlayClick(event)">
   <div class="modal-box">
-    <button onclick="closeModal()" style="position:absolute;top:16px;right:16px;background:none;border:none;color:var(--text-muted);cursor:pointer;font-size:18px">✕</button>
-
+    <button class="modal-close" onclick="closeModal()">✕</button>
     <div class="modal-title">🔔 価格アラート設定</div>
-    <p style="font-size:12px;color:var(--text-muted);margin-bottom:20px;font-family:'JetBrains Mono',monospace" id="modalCardName">カードを選択してください</p>
+    <div class="modal-sub" id="modalSubEl"></div>
 
-    <div class="space-y-4">
-      <div>
-        <label style="font-family:'Orbitron',monospace;font-size:10px;letter-spacing:.1em;color:var(--text-muted);text-transform:uppercase;display:block;margin-bottom:8px">通知価格（円以下）</label>
-        <input type="number" class="modal-input" id="alertPrice" placeholder="例: 5000" min="0">
-        <div class="mt-2">
-          <input type="range" id="priceRange" min="100" max="50000" value="5000" oninput="document.getElementById('alertPrice').value=this.value">
-          <div class="flex justify-between mt-1" style="font-family:'JetBrains Mono',monospace;font-size:9px;color:var(--text-muted)">
-            <span>¥100</span><span>¥50,000</span>
-          </div>
-        </div>
-      </div>
+    <label class="form-lbl">通知価格（円以下）</label>
+    <input type="number" class="form-input" id="alertPriceEl" placeholder="例: 5000" min="0">
+    <input type="range"  id="priceRangeEl" min="100" max="100000" value="5000"
+           oninput="document.getElementById('alertPriceEl').value=this.value">
+    <div class="range-labels"><span>¥100</span><span>¥100,000</span></div>
 
-      <div>
-        <label style="font-family:'Orbitron',monospace;font-size:10px;letter-spacing:.1em;color:var(--text-muted);text-transform:uppercase;display:block;margin-bottom:8px">対象プラットフォーム</label>
-        <select class="modal-select" id="alertPlatform">
-          <option value="all">すべてのサイト</option>
-          <option value="mercari">メルカリのみ</option>
-          <option value="yahoo">ヤフオクのみ</option>
-          <option value="shop">大手ショップのみ</option>
-        </select>
-      </div>
+    <label class="form-lbl">対象プラットフォーム</label>
+    <select class="form-select">
+      <option>すべてのサイト</option>
+      <option>メルカリのみ</option>
+      <option>ヤフオクのみ</option>
+      <option>大手ショップのみ</option>
+    </select>
 
-      <div>
-        <label style="font-family:'Orbitron',monospace;font-size:10px;letter-spacing:.1em;color:var(--text-muted);text-transform:uppercase;display:block;margin-bottom:8px">通知方法</label>
-        <div class="grid grid-cols-2 gap-2">
-          <label style="display:flex;align-items:center;gap:8px;padding:10px;border:1px solid rgba(0,245,255,0.2);border-radius:4px;cursor:pointer;background:rgba(0,245,255,0.03)">
-            <input type="radio" name="notifyMethod" value="email" checked style="accent-color:var(--neon-cyan)">
-            <span style="font-family:'JetBrains Mono',monospace;font-size:12px">📧 メール</span>
-          </label>
-          <label style="display:flex;align-items:center;gap:8px;padding:10px;border:1px solid rgba(0,245,255,0.2);border-radius:4px;cursor:pointer;background:rgba(0,245,255,0.03)">
-            <input type="radio" name="notifyMethod" value="line" style="accent-color:var(--neon-cyan)">
-            <span style="font-family:'JetBrains Mono',monospace;font-size:12px">💬 LINE</span>
-          </label>
-        </div>
-      </div>
-
-      <div>
-        <label style="font-family:'Orbitron',monospace;font-size:10px;letter-spacing:.1em;color:var(--text-muted);text-transform:uppercase;display:block;margin-bottom:8px">メールアドレス</label>
-        <input type="email" class="modal-input" id="alertEmail" placeholder="your@email.com">
-      </div>
-
-      <button class="submit-btn" onclick="submitAlert()">
-        アラートを登録する →
-      </button>
+    <label class="form-lbl">通知方法</label>
+    <div class="notify-row">
+      <label class="notify-opt">
+        <input type="radio" name="nm" value="email" checked style="accent-color:var(--neon-cyan)">
+        <span>📧 メール</span>
+      </label>
+      <label class="notify-opt">
+        <input type="radio" name="nm" value="line" style="accent-color:var(--neon-cyan)">
+        <span>💬 LINE</span>
+      </label>
     </div>
+
+    <label class="form-lbl">メールアドレス</label>
+    <input type="email" class="form-input" id="alertEmailEl" placeholder="your@email.com">
+
+    <button class="submit-btn" onclick="submitAlert()">アラートを登録する →</button>
   </div>
 </div>
 
+<!-- ══════════════════════════════════════════════════════
+     JavaScript — すべてのロジック
+══════════════════════════════════════════════════════ -->
 <script>
-// ═══════════════════════════════════════════════════════════════
-//  DATA STRUCTURE — 将来的にAPIスクレイピング結果を流し込む想定
-// ═══════════════════════════════════════════════════════════════
+/* ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+   ① カードデータ（const cards = [...] 形式）
+   将来はここをAPIレスポンスで置き換える
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ */
+const cards = [
+  // ─── ポケモン ───────────────────────────────
+  {
+    id:"sv3a-001",  game:"pokemon",
+    name:"リザードンex",           set:"黒炎の支配者",        code:"sv3a 001/108",
+    emoji:"🦎", rarity:"SAR", rc:"r-sec", hot:true,
+    prices:{ mercari:{c:12800,p:14200}, yahoo:{c:13500,p:13200}, shop:{c:15800,p:15800} }
+  },
+  {
+    id:"sv4k-054",  game:"pokemon",
+    name:"ピカチュウex",           set:"古代の咆哮",           code:"sv4k 054/190",
+    emoji:"⚡", rarity:"SR",  rc:"r-sr",  hot:false,
+    prices:{ mercari:{c:3200,p:2900},  yahoo:{c:3600,p:3400},  shop:{c:4200,p:4200}  }
+  },
+  {
+    id:"sv2a-086",  game:"pokemon",
+    name:"ミュウex",              set:"ポケモンカード151",     code:"sv2a 086/165",
+    emoji:"🌟", rarity:"SAR", rc:"r-sec", hot:true,
+    prices:{ mercari:{c:18500,p:21000}, yahoo:{c:19200,p:21500}, shop:{c:22800,p:22800} }
+  },
+  {
+    id:"sv5a-098",  game:"pokemon",
+    name:"イーブイヒーローズ SAR", set:"サイバージャッジ",      code:"sv5a 098/071",
+    emoji:"🦊", rarity:"UR",  rc:"r-ur",  hot:false,
+    prices:{ mercari:{c:6400,p:6600},  yahoo:{c:6800,p:6800},  shop:{c:7500,p:7200}  }
+  },
+  {
+    id:"sv3a-069",  game:"pokemon",
+    name:"ヒスイゾロアークVSTAR", set:"黒炎の支配者",          code:"sv3a 069/108",
+    emoji:"🌑", rarity:"SAR", rc:"r-sec", hot:false,
+    prices:{ mercari:{c:9200,p:8800},  yahoo:{c:9800,p:9200},  shop:{c:11500,p:11500} }
+  },
+  {
+    id:"sv1s-200",  game:"pokemon",
+    name:"ネストボール SR",        set:"スカーレット",          code:"sv1s 200/198",
+    emoji:"🔴", rarity:"SR",  rc:"r-sr",  hot:false,
+    prices:{ mercari:{c:1200,p:1100},  yahoo:{c:1350,p:1300},  shop:{c:1600,p:1600}  }
+  },
+  {
+    id:"sv6-099",   game:"pokemon",
+    name:"ゲッコウガex SAR",       set:"ナイトワンダラー",      code:"sv6 099/064",
+    emoji:"🌊", rarity:"SAR", rc:"r-sec", hot:true,
+    prices:{ mercari:{c:8900,p:9400},  yahoo:{c:9200,p:9800},  shop:{c:11000,p:11000} }
+  },
 
-const CARD_DATA = {
-  pokemon: {
-    label: "ポケモンカード",
-    color: "cyan",
-    cards: [
-      {
-        id: "sv3a-001",
-        name: "リザードンex",
-        set: "SV拡張パック「黒炎の支配者」",
-        code: "sv3a 001/108",
-        emoji: "🦎",
-        rarity: "SAR",
-        rarityClass: "rarity-sec",
-        hot: true,
-        prices: {
-          mercari: { current: 12800, prev: 14200 },
-          yahoo:   { current: 13500, prev: 13200 },
-          shop:    { current: 15800, prev: 15800 }
-        }
-      },
-      {
-        id: "sv4k-054",
-        name: "ピカチュウex",
-        set: "SV拡張パック「古代の咆哮」",
-        code: "sv4k 054/190",
-        emoji: "⚡",
-        rarity: "SR",
-        rarityClass: "rarity-sr",
-        hot: false,
-        prices: {
-          mercari: { current: 3200, prev: 2900 },
-          yahoo:   { current: 3600, prev: 3400 },
-          shop:    { current: 4200, prev: 4200 }
-        }
-      },
-      {
-        id: "sv2a-086",
-        name: "ミュウex",
-        set: "SV強化拡張パック「ポケモンカード151」",
-        code: "sv2a 086/165",
-        emoji: "🌟",
-        rarity: "SAR",
-        rarityClass: "rarity-sec",
-        hot: true,
-        prices: {
-          mercari: { current: 18500, prev: 21000 },
-          yahoo:   { current: 19200, prev: 21500 },
-          shop:    { current: 22800, prev: 22800 }
-        }
-      },
-      {
-        id: "sv5a-098",
-        name: "イーブイヒーローズ",
-        set: "SV拡張パック「サイバージャッジ」",
-        code: "sv5a 098/071",
-        emoji: "🦊",
-        rarity: "UR",
-        rarityClass: "rarity-ur",
-        hot: false,
-        prices: {
-          mercari: { current: 6400, prev: 6600 },
-          yahoo:   { current: 6800, prev: 6800 },
-          shop:    { current: 7500, prev: 7200 }
-        }
-      },
-      {
-        id: "sv3a-069",
-        name: "ヒスイゾロアークVSTAR",
-        set: "SV拡張パック「黒炎の支配者」",
-        code: "sv3a 069/108",
-        emoji: "🌑",
-        rarity: "SAR",
-        rarityClass: "rarity-sec",
-        hot: false,
-        prices: {
-          mercari: { current: 9200, prev: 8800 },
-          yahoo:   { current: 9800, prev: 9200 },
-          shop:    { current: 11500, prev: 11500 }
-        }
-      },
-      {
-        id: "sv1s-200",
-        name: "ネストボール",
-        set: "SV拡張パック「スカーレット」",
-        code: "sv1s 200/198",
-        emoji: "🔴",
-        rarity: "SR",
-        rarityClass: "rarity-sr",
-        hot: false,
-        prices: {
-          mercari: { current: 1200, prev: 1100 },
-          yahoo:   { current: 1350, prev: 1300 },
-          shop:    { current: 1600, prev: 1600 }
-        }
-      },
-    ]
+  // ─── ワンピース ─────────────────────────────
+  {
+    id:"op01-016",  game:"onepiece",
+    name:"モンキー・D・ルフィ (SEC)", set:"ROMANCE DAWN",             code:"OP01-016",
+    emoji:"🎩", rarity:"SEC", rc:"r-sec", hot:true,
+    prices:{ mercari:{c:32000,p:38000}, yahoo:{c:34500,p:39000}, shop:{c:40000,p:40000} }
   },
-  onepiece: {
-    label: "ワンピースカード",
-    color: "pink",
-    cards: [
-      {
-        id: "op01-016",
-        name: "モンキー・D・ルフィ",
-        set: "ROMANCE DAWN",
-        code: "OP01-016",
-        emoji: "🎩",
-        rarity: "SEC",
-        rarityClass: "rarity-sec",
-        hot: true,
-        prices: {
-          mercari: { current: 32000, prev: 38000 },
-          yahoo:   { current: 34500, prev: 39000 },
-          shop:    { current: 40000, prev: 40000 }
-        }
-      },
-      {
-        id: "op04-062",
-        name: "ニコ・ロビン",
-        set: "Kingdom of Intrigue",
-        code: "OP04-062",
-        emoji: "🌸",
-        rarity: "SR",
-        rarityClass: "rarity-sr",
-        hot: false,
-        prices: {
-          mercari: { current: 4800, prev: 4500 },
-          yahoo:   { current: 5200, prev: 5000 },
-          shop:    { current: 6000, prev: 6000 }
-        }
-      },
-      {
-        id: "op02-099",
-        name: "ポートガス・D・エース",
-        set: "Paramount War",
-        code: "OP02-099",
-        emoji: "🔥",
-        rarity: "SR",
-        rarityClass: "rarity-sr",
-        hot: true,
-        prices: {
-          mercari: { current: 8900, prev: 7800 },
-          yahoo:   { current: 9200, prev: 8200 },
-          shop:    { current: 11000, prev: 11000 }
-        }
-      },
-      {
-        id: "op05-119",
-        name: "ロロノア・ゾロ",
-        set: "Awakening of the New Era",
-        code: "OP05-119",
-        emoji: "⚔️",
-        rarity: "SEC",
-        rarityClass: "rarity-sec",
-        hot: true,
-        prices: {
-          mercari: { current: 45000, prev: 52000 },
-          yahoo:   { current: 47000, prev: 53000 },
-          shop:    { current: 55000, prev: 55000 }
-        }
-      },
-    ]
+  {
+    id:"op04-062",  game:"onepiece",
+    name:"ニコ・ロビン SR",          set:"Kingdom of Intrigue",      code:"OP04-062",
+    emoji:"🌸", rarity:"SR",  rc:"r-sr",  hot:false,
+    prices:{ mercari:{c:4800,p:4500},  yahoo:{c:5200,p:5000},  shop:{c:6000,p:6000}  }
   },
-  yugioh: {
-    label: "遊戯王カード",
-    color: "yellow",
-    cards: [
-      {
-        id: "duel-001",
-        name: "ブラック・マジシャン",
-        set: "QUARTER CENTURY CHRONICLE side:PRIDE",
-        code: "QCCP-JP001",
-        emoji: "🧙",
-        rarity: "UR",
-        rarityClass: "rarity-ur",
-        hot: true,
-        prices: {
-          mercari: { current: 25000, prev: 28000 },
-          yahoo:   { current: 26500, prev: 29000 },
-          shop:    { current: 32000, prev: 32000 }
-        }
-      },
-      {
-        id: "duel-002",
-        name: "青眼の白龍",
-        set: "QUARTER CENTURY CHRONICLE side:PRIDE",
-        code: "QCCP-JP002",
-        emoji: "🐉",
-        rarity: "UR",
-        rarityClass: "rarity-ur",
-        hot: true,
-        prices: {
-          mercari: { current: 38000, prev: 35000 },
-          yahoo:   { current: 39500, prev: 36000 },
-          shop:    { current: 45000, prev: 45000 }
-        }
-      },
-      {
-        id: "duel-003",
-        name: "ブラック・マジシャン・ガール",
-        set: "PHANTOM NIGHTMARE",
-        code: "PHNI-JP030",
-        emoji: "🌙",
-        rarity: "SR",
-        rarityClass: "rarity-sr",
-        hot: false,
-        prices: {
-          mercari: { current: 3200, prev: 3100 },
-          yahoo:   { current: 3500, prev: 3400 },
-          shop:    { current: 4200, prev: 4200 }
-        }
-      },
-    ]
+  {
+    id:"op02-099",  game:"onepiece",
+    name:"ポートガス・D・エース SR", set:"Paramount War",             code:"OP02-099",
+    emoji:"🔥", rarity:"SR",  rc:"r-sr",  hot:true,
+    prices:{ mercari:{c:8900,p:7800},  yahoo:{c:9200,p:8200},  shop:{c:11000,p:11000} }
   },
-  dragonball: {
-    label: "ドラゴンボールスーパーカードゲーム",
-    color: "yellow",
-    cards: [
-      {
-        id: "db-001",
-        name: "孫悟空 (超サイヤ人4)",
-        set: "FUSION WORLD FB04",
-        code: "FB04-001",
-        emoji: "🔱",
-        rarity: "SEC",
-        rarityClass: "rarity-sec",
-        hot: true,
-        prices: {
-          mercari: { current: 18000, prev: 22000 },
-          yahoo:   { current: 19000, prev: 22500 },
-          shop:    { current: 25000, prev: 25000 }
-        }
-      },
-      {
-        id: "db-002",
-        name: "ベジータ (超サイヤ人ブルー)",
-        set: "FUSION WORLD FB03",
-        code: "FB03-050",
-        emoji: "💎",
-        rarity: "SR",
-        rarityClass: "rarity-sr",
-        hot: false,
-        prices: {
-          mercari: { current: 5400, prev: 5000 },
-          yahoo:   { current: 5800, prev: 5500 },
-          shop:    { current: 7000, prev: 7000 }
-        }
-      }
-    ]
+  {
+    id:"op05-119",  game:"onepiece",
+    name:"ロロノア・ゾロ (SEC)",      set:"Awakening of the New Era", code:"OP05-119",
+    emoji:"⚔️", rarity:"SEC", rc:"r-sec", hot:true,
+    prices:{ mercari:{c:45000,p:52000}, yahoo:{c:47000,p:53000}, shop:{c:55000,p:55000} }
   },
-  cardfight: {
-    label: "カードファイト!! ヴァンガード",
-    color: "cyan",
-    cards: [
-      {
-        id: "cf-001",
-        name: "ブラスター・ブレード",
-        set: "V Clan Collection Vol.1",
-        code: "V-SS09/004",
-        emoji: "⚔",
-        rarity: "UR",
-        rarityClass: "rarity-ur",
-        hot: false,
-        prices: {
-          mercari: { current: 6800, prev: 7200 },
-          yahoo:   { current: 7200, prev: 7500 },
-          shop:    { current: 8500, prev: 8500 }
-        }
-      }
-    ]
-  }
+  {
+    id:"op06-022",  game:"onepiece",
+    name:"ナミ SR",                 set:"Wings of the Captain",     code:"OP06-022",
+    emoji:"🍊", rarity:"SR",  rc:"r-sr",  hot:false,
+    prices:{ mercari:{c:3400,p:3200},  yahoo:{c:3700,p:3500},  shop:{c:4500,p:4500}  }
+  },
+
+  // ─── 遊戯王 ─────────────────────────────────
+  {
+    id:"qccp-001",  game:"yugioh",
+    name:"ブラック・マジシャン UR",         set:"QUARTER CENTURY CHRONICLE", code:"QCCP-JP001",
+    emoji:"🧙", rarity:"UR",  rc:"r-ur",  hot:true,
+    prices:{ mercari:{c:25000,p:28000}, yahoo:{c:26500,p:29000}, shop:{c:32000,p:32000} }
+  },
+  {
+    id:"qccp-002",  game:"yugioh",
+    name:"青眼の白龍 UR",                  set:"QUARTER CENTURY CHRONICLE", code:"QCCP-JP002",
+    emoji:"🐉", rarity:"UR",  rc:"r-ur",  hot:true,
+    prices:{ mercari:{c:38000,p:35000}, yahoo:{c:39500,p:36000}, shop:{c:45000,p:45000} }
+  },
+  {
+    id:"phni-030",  game:"yugioh",
+    name:"ブラック・マジシャン・ガール SR", set:"PHANTOM NIGHTMARE",         code:"PHNI-JP030",
+    emoji:"🌙", rarity:"SR",  rc:"r-sr",  hot:false,
+    prices:{ mercari:{c:3200,p:3100},  yahoo:{c:3500,p:3400},  shop:{c:4200,p:4200}  }
+  },
+  {
+    id:"lede-001",  game:"yugioh",
+    name:"混沌魔龍 カオス・ルーラー UR",   set:"LEGACY OF DESTRUCTION",     code:"LEDE-JP001",
+    emoji:"💜", rarity:"UR",  rc:"r-ur",  hot:false,
+    prices:{ mercari:{c:7200,p:8000},  yahoo:{c:7500,p:8400},  shop:{c:9800,p:9800}  }
+  },
+
+  // ─── ドラゴンボール ─────────────────────────
+  {
+    id:"fb04-001",  game:"dragonball",
+    name:"孫悟空 (超サイヤ人4)",        set:"FUSION WORLD FB04", code:"FB04-001",
+    emoji:"🔱", rarity:"SEC", rc:"r-sec", hot:true,
+    prices:{ mercari:{c:18000,p:22000}, yahoo:{c:19000,p:22500}, shop:{c:25000,p:25000} }
+  },
+  {
+    id:"fb03-050",  game:"dragonball",
+    name:"ベジータ (超サイヤ人ブルー)", set:"FUSION WORLD FB03", code:"FB03-050",
+    emoji:"💎", rarity:"SR",  rc:"r-sr",  hot:false,
+    prices:{ mercari:{c:5400,p:5000},  yahoo:{c:5800,p:5500},  shop:{c:7000,p:7000}  }
+  },
+  {
+    id:"fb01-077",  game:"dragonball",
+    name:"フリーザ (最終形態) SR",      set:"FUSION WORLD FB01", code:"FB01-077",
+    emoji:"❄️", rarity:"SR",  rc:"r-sr",  hot:false,
+    prices:{ mercari:{c:2800,p:3100},  yahoo:{c:3000,p:3300},  shop:{c:3800,p:3800}  }
+  },
+
+  // ─── ヴァンガード ────────────────────────────
+  {
+    id:"vss09-004", game:"cardfight",
+    name:"ブラスター・ブレード UR", set:"V Clan Collection Vol.1", code:"V-SS09/004",
+    emoji:"⚔", rarity:"UR",  rc:"r-ur",  hot:false,
+    prices:{ mercari:{c:6800,p:7200},  yahoo:{c:7200,p:7500},  shop:{c:8500,p:8500}  }
+  },
+  {
+    id:"d-bt01-001",game:"cardfight",
+    name:"蒼騎士 アルフレッド SR",  set:"D-Booster Set 01",       code:"D-BT01/001",
+    emoji:"🛡️", rarity:"SR",  rc:"r-sr",  hot:true,
+    prices:{ mercari:{c:4200,p:3800},  yahoo:{c:4500,p:4000},  shop:{c:5800,p:5800}  }
+  },
+];
+
+/* ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+   ② ゲームメタ
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ */
+const GAMES = {
+  pokemon:    { label:"ポケモンカード",                   cls:"tab-cyan"   },
+  onepiece:   { label:"ワンピースカードゲーム",             cls:"tab-pink"   },
+  yugioh:     { label:"遊戯王カード",                     cls:"tab-yellow" },
+  dragonball: { label:"ドラゴンボールスーパーカードゲーム",  cls:"tab-yellow" },
+  cardfight:  { label:"カードファイト!! ヴァンガード",       cls:"tab-cyan"   },
 };
 
-// ═══════════════════════════════════════════════════════════════
-//  State
-// ═══════════════════════════════════════════════════════════════
+/* ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+   ③ アプリ状態
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ */
+let state = { game:"pokemon", query:"", sort:"price" };
 
-let currentGame = 'pokemon';
-let currentSort = 'price';
-let searchQuery = '';
-let modalCardId = null;
+/* ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+   ④ ユーティリティ関数
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ */
+const yen = n => '¥' + n.toLocaleString('ja-JP');
 
-// ═══════════════════════════════════════════════════════════════
-//  Helpers
-// ═══════════════════════════════════════════════════════════════
-
-function fmt(n) {
-  return '¥' + n.toLocaleString('ja-JP');
+// 3サイトの最安値を返す
+function lowest(card) {
+  return Math.min(card.prices.mercari.c, card.prices.yahoo.c, card.prices.shop.c);
 }
 
-function getLowest(prices) {
-  const vals = Object.values(prices);
-  return Math.min(...vals.map(v => v.current));
+// 最安値のサイトキーを返す
+function lowestKey(card) {
+  const p = card.prices;
+  if (p.mercari.c <= p.yahoo.c && p.mercari.c <= p.shop.c) return 'mercari';
+  if (p.yahoo.c   <= p.shop.c)                              return 'yahoo';
+  return 'shop';
 }
 
-function getChange(prices) {
-  const curr = Object.values(prices).reduce((a,b)=>a+b.current,0)/3;
-  const prev = Object.values(prices).reduce((a,b)=>a+b.prev,0)/3;
-  return ((curr - prev) / prev * 100).toFixed(1);
+const SITE_LABEL = { mercari:"メルカリ", yahoo:"ヤフオク", shop:"大手ショップ" };
+
+// 平均変動率 (%)
+function avgChg(card) {
+  const p = card.prices;
+  const sum = ['mercari','yahoo','shop'].reduce((a,k) => a + (p[k].c - p[k].p) / p[k].p, 0);
+  return (sum / 3 * 100).toFixed(1);
 }
 
-function changeBadge(pct) {
+// 変動バッジHTML
+function chgBadge(pct) {
   const n = parseFloat(pct);
-  if (n > 0.5)  return `<span class="change-up">▲ ${Math.abs(n)}%</span>`;
-  if (n < -0.5) return `<span class="change-down">▼ ${Math.abs(n)}%</span>`;
-  return `<span class="change-flat">→ ${Math.abs(n)}%</span>`;
+  if (n >  0.3) return `<span class="chg chg-up">▲ ${Math.abs(n)}%</span>`;
+  if (n < -0.3) return `<span class="chg chg-dn">▼ ${Math.abs(n)}%</span>`;
+  return               `<span class="chg chg-fl">→ ${Math.abs(n)}%</span>`;
 }
 
-function priceChangeColor(curr, prev) {
-  if (curr < prev) return 'style="color:var(--neon-green)"';
-  if (curr > prev) return 'style="color:var(--neon-pink)"';
+// 価格上昇・下降のCSSクラス
+function priceCls(cur, prev) {
+  if (cur < prev) return 'p-dn';
+  if (cur > prev) return 'p-up';
   return '';
 }
 
-// ═══════════════════════════════════════════════════════════════
-//  Render
-// ═══════════════════════════════════════════════════════════════
+/* ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+   ⑤ フィルター & ソート
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ */
+function getCards() {
+  // ─ ゲームで絞り込み（タブ切り替えロジック）
+  let res = cards.filter(c => c.game === state.game);
 
-function renderCards() {
-  const gameData = CARD_DATA[currentGame];
-  let cards = [...gameData.cards];
-
-  // Filter
-  if (searchQuery) {
-    const q = searchQuery.toLowerCase();
-    cards = cards.filter(c =>
+  // ─ 検索クエリで絞り込み（検索ロジック）
+  //   カード名 / 型番 / 弾名 を小文字で比較
+  const q = state.query.trim().toLowerCase();
+  if (q !== '') {
+    res = res.filter(c =>
       c.name.toLowerCase().includes(q) ||
       c.code.toLowerCase().includes(q) ||
       c.set.toLowerCase().includes(q)
     );
   }
 
-  // Sort
-  if (currentSort === 'price') {
-    cards.sort((a,b) => getLowest(a.prices) - getLowest(b.prices));
-  } else if (currentSort === 'change') {
-    cards.sort((a,b) => Math.abs(parseFloat(getChange(b.prices))) - Math.abs(parseFloat(getChange(a.prices))));
-  } else if (currentSort === 'new') {
-    // reverse order = newest first (simulating timestamp)
-    cards.reverse();
-  }
+  // ─ ソート
+  if      (state.sort === 'price')  res.sort((a,b) => lowest(a) - lowest(b));
+  else if (state.sort === 'change') res.sort((a,b) => Math.abs(parseFloat(avgChg(b))) - Math.abs(parseFloat(avgChg(a))));
+  else if (state.sort === 'new')    res.reverse();
 
-  document.getElementById('resultCount').textContent = `${cards.length}件`;
-  document.getElementById('currentGameLabel').textContent = gameData.label;
+  return res;
+}
 
-  const grid = document.getElementById('cardGrid');
-  grid.innerHTML = '';
+/* ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+   ⑥ 1枚分のHTML生成
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ */
+function cardHTML(card, idx) {
+  const lk  = lowestKey(card);
+  const lv  = lowest(card);
+  const pct = avgChg(card);
+  const p   = card.prices;
 
-  if (cards.length === 0) {
-    grid.innerHTML = `<div class="col-span-4 text-center py-16" style="color:var(--text-muted);font-family:'JetBrains Mono',monospace">該当するカードが見つかりませんでした</div>`;
+  return `
+<div class="p-card" style="animation-delay:${idx*55}ms">
+  <div class="card-thumb">
+    ${card.emoji}
+    <span class="rarity-badge ${card.rc}">${card.rarity}</span>
+    ${card.hot ? '<span class="hot-badge">🔥 HOT</span>' : ''}
+  </div>
+  <div class="card-body">
+    <div class="name-row">
+      <div class="card-name">${card.name}</div>
+      ${chgBadge(pct)}
+    </div>
+    <div class="card-code">${card.code}</div>
+    <div class="card-set">${card.set}</div>
+
+    <div class="lowest-block">
+      <div>
+        <div class="lowest-lbl">最安値</div>
+        <div class="lowest-price">${yen(lv)}</div>
+      </div>
+      <div class="lowest-site">${SITE_LABEL[lk]}</div>
+    </div>
+
+    <div class="price-row">
+      <div class="price-cell ${lk==='mercari'?'low':''}">
+        <div class="p-site">メルカリ</div>
+        <div class="p-val ${priceCls(p.mercari.c,p.mercari.p)}">${yen(p.mercari.c)}</div>
+      </div>
+      <div class="price-cell ${lk==='yahoo'?'low':''}">
+        <div class="p-site">ヤフオク</div>
+        <div class="p-val ${priceCls(p.yahoo.c,p.yahoo.p)}">${yen(p.yahoo.c)}</div>
+      </div>
+      <div class="price-cell ${lk==='shop'?'low':''}">
+        <div class="p-site">大手ショップ</div>
+        <div class="p-val ${priceCls(p.shop.c,p.shop.p)}">${yen(p.shop.c)}</div>
+      </div>
+    </div>
+
+    <button class="alert-btn" onclick="openModal('${card.id}')">
+      🔔 価格アラートを設定する
+    </button>
+  </div>
+</div>`;
+}
+
+/* ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+   ⑦ グリッド描画（メイン描画関数）
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ */
+function render() {
+  const list = getCards();
+  document.getElementById('gameLabelEl').textContent = GAMES[state.game].label;
+  document.getElementById('countEl').textContent     = `${list.length}件`;
+
+  if (list.length === 0) {
+    document.getElementById('gridEl').innerHTML =
+      `<div class="empty-state">「${state.query}」に一致するカードが見つかりませんでした</div>`;
     return;
   }
-
-  cards.forEach((card, i) => {
-    const lowestVal = getLowest(card.prices);
-    const changePct = getChange(card.prices);
-    const p = card.prices;
-
-    // determine lowest platform
-    const lowestKey = Object.entries(p).reduce((a,b) => b[1].current < a[1].current ? b : a)[0];
-
-    const el = document.createElement('div');
-    el.className = 'price-card card-enter';
-    el.style.animationDelay = `${i * 60}ms`;
-    el.style.opacity = '0';
-
-    el.innerHTML = `
-      <div class="card-img-wrap">
-        <div class="card-img-placeholder">${card.emoji}</div>
-        <div class="rarity-badge ${card.rarityClass}">${card.rarity}</div>
-        ${card.hot ? '<div style="position:absolute;top:8px;left:8px" class="hot-badge">🔥 HOT</div>' : ''}
-      </div>
-
-      <div class="p-3 space-y-3">
-        <!-- Card info -->
-        <div>
-          <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:2px">
-            <h3 style="font-weight:700;font-size:14px;line-height:1.2;flex:1">${card.name}</h3>
-            ${changeBadge(changePct)}
-          </div>
-          <div style="font-family:'JetBrains Mono',monospace;font-size:10px;color:var(--text-muted)">${card.code}</div>
-          <div style="font-size:11px;color:var(--text-muted);margin-top:2px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${card.set}</div>
-        </div>
-
-        <!-- Lowest price hero -->
-        <div style="background:rgba(0,255,136,0.06);border:1px solid rgba(0,255,136,0.2);border-radius:5px;padding:8px 10px;display:flex;align-items:center;justify-content:space-between">
-          <div>
-            <div style="font-family:'JetBrains Mono',monospace;font-size:9px;color:var(--neon-green);letter-spacing:.1em;text-transform:uppercase;margin-bottom:1px">最安値</div>
-            <div style="font-family:'Orbitron',monospace;font-size:20px;font-weight:900;color:var(--neon-green)">${fmt(lowestVal)}</div>
-          </div>
-          <div style="font-family:'JetBrains Mono',monospace;font-size:10px;color:var(--text-muted);text-align:right">
-            ${lowestKey === 'mercari' ? 'メルカリ' : lowestKey === 'yahoo' ? 'ヤフオク' : '大手ショップ'}
-          </div>
-        </div>
-
-        <!-- Price breakdown -->
-        <div class="grid grid-cols-3 gap-1.5">
-          <div class="price-cell ${lowestKey === 'mercari' ? 'lowest' : ''}">
-            <div class="site-name">メルカリ</div>
-            <div class="price-value" ${priceChangeColor(p.mercari.current, p.mercari.prev)}>${fmt(p.mercari.current)}</div>
-          </div>
-          <div class="price-cell ${lowestKey === 'yahoo' ? 'lowest' : ''}">
-            <div class="site-name">ヤフオク</div>
-            <div class="price-value" ${priceChangeColor(p.yahoo.current, p.yahoo.prev)}>${fmt(p.yahoo.current)}</div>
-          </div>
-          <div class="price-cell ${lowestKey === 'shop' ? 'lowest' : ''}">
-            <div class="site-name">大手ショップ</div>
-            <div class="price-value" ${priceChangeColor(p.shop.current, p.shop.prev)}>${fmt(p.shop.current)}</div>
-          </div>
-        </div>
-
-        <!-- Alert button -->
-        <button class="alert-btn w-full" onclick="openModal('${card.id}')">
-          🔔 価格アラートを設定する
-        </button>
-      </div>
-    `;
-
-    grid.appendChild(el);
-    // Trigger reflow for animation
-    requestAnimationFrame(() => { el.style.opacity = ''; });
-  });
+  document.getElementById('gridEl').innerHTML = list.map((c,i) => cardHTML(c,i)).join('');
 }
 
-// ═══════════════════════════════════════════════════════════════
-//  Game selection
-// ═══════════════════════════════════════════════════════════════
+/* ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+   ⑧ イベントハンドラ
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ */
 
-const gameColors = {
-  pokemon: 'active',
-  onepiece: 'active-pink',
-  yugioh: 'active-yellow',
-  dragonball: 'active-yellow',
-  cardfight: 'active'
-};
+// タブ切り替え
+function switchGame(btn) {
+  state.game  = btn.dataset.game;
+  state.query = '';
+  document.getElementById('searchEl').value = '';
 
-function selectGame(game, btn) {
-  currentGame = game;
-  document.querySelectorAll('.game-tab').forEach(t => {
-    t.classList.remove('active', 'active-pink', 'active-yellow');
-  });
-  btn.classList.add(gameColors[game] || 'active');
-  renderCards();
+  document.querySelectorAll('.game-tab')
+    .forEach(t => t.classList.remove('tab-cyan','tab-pink','tab-yellow'));
+  btn.classList.add(GAMES[state.game].cls);
+
+  render();
 }
 
-// ═══════════════════════════════════════════════════════════════
-//  Search & Sort
-// ═══════════════════════════════════════════════════════════════
-
-function filterCards() {
-  searchQuery = document.getElementById('searchInput').value;
-  renderCards();
+// 検索（oninput から呼ばれる）
+function onSearch() {
+  state.query = document.getElementById('searchEl').value;
+  render();  // 入力のたびに再描画するだけ
 }
 
-function sortCards(type) {
-  currentSort = type;
+// ソート
+function setSort(type, btn) {
+  state.sort = type;
   document.querySelectorAll('.sort-btn').forEach(b => b.classList.remove('active'));
-  document.getElementById('sort' + type.charAt(0).toUpperCase() + type.slice(1)).classList.add('active');
-  renderCards();
+  btn.classList.add('active');
+  render();
 }
 
-// ═══════════════════════════════════════════════════════════════
-//  Modal
-// ═══════════════════════════════════════════════════════════════
-
+/* ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+   ⑨ モーダル
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ */
 function openModal(cardId) {
-  modalCardId = cardId;
   const overlay = document.getElementById('modalOverlay');
-
   if (cardId) {
-    const allCards = Object.values(CARD_DATA).flatMap(g => g.cards);
-    const card = allCards.find(c => c.id === cardId);
+    const card = cards.find(c => c.id === cardId);
     if (card) {
-      document.getElementById('modalCardName').textContent = `${card.name} — ${card.code}`;
-      document.getElementById('alertPrice').value = Math.round(getLowest(card.prices) * 0.85);
-      document.getElementById('priceRange').value = Math.round(getLowest(card.prices) * 0.85);
+      document.getElementById('modalSubEl').textContent = `${card.name} — ${card.code}`;
+      const sug = Math.round(lowest(card) * 0.85);
+      document.getElementById('alertPriceEl').value = sug;
+      document.getElementById('priceRangeEl').value = Math.min(sug, 100000);
     }
   } else {
-    document.getElementById('modalCardName').textContent = '全カード監視モード';
+    document.getElementById('modalSubEl').textContent = '全カード監視モード';
   }
-
   overlay.classList.add('open');
 }
 
@@ -1266,82 +692,74 @@ function closeModal() {
   document.getElementById('modalOverlay').classList.remove('open');
 }
 
-function closeModalOutside(e) {
+function onOverlayClick(e) {
   if (e.target === document.getElementById('modalOverlay')) closeModal();
 }
 
 function submitAlert() {
-  const email = document.getElementById('alertEmail').value;
-  const price = document.getElementById('alertPrice').value;
+  const email = document.getElementById('alertEmailEl').value.trim();
+  const price = document.getElementById('alertPriceEl').value;
   if (!email || !price) {
-    document.getElementById('alertEmail').style.borderColor = 'var(--neon-pink)';
-    setTimeout(() => { document.getElementById('alertEmail').style.borderColor = ''; }, 2000);
+    const el = document.getElementById('alertEmailEl');
+    el.style.borderColor = 'var(--neon-pink)';
+    setTimeout(() => { el.style.borderColor = ''; }, 2000);
     return;
   }
   closeModal();
-  showToast(`✓ ¥${parseInt(price).toLocaleString()} 以下でアラートを設定しました`);
+  toast(`✓ ¥${parseInt(price).toLocaleString()} 以下でアラートを設定しました`);
 }
 
-function showToast(msg) {
-  const t = document.getElementById('toast');
-  t.textContent = msg;
-  t.classList.add('show');
-  setTimeout(() => t.classList.remove('show'), 3500);
-}
-
-// ═══════════════════════════════════════════════════════════════
-//  Ticker
-// ═══════════════════════════════════════════════════════════════
-
+/* ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+   ⑩ ティッカー
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ */
 function buildTicker() {
-  const items = Object.values(CARD_DATA).flatMap(g =>
-    g.cards.map(c => {
-      const chg = parseFloat(getChange(c.prices));
-      const cls = chg > 0 ? 'up' : chg < 0 ? 'down' : '';
-      const arrow = chg > 0 ? '▲' : chg < 0 ? '▼' : '→';
-      return `<div class="ticker-item">${c.name} <span>${fmt(getLowest(c.prices))}</span> <span class="${cls}">${arrow}${Math.abs(chg)}%</span></div>`;
-    })
-  );
-  const doubled = [...items, ...items];
-  document.getElementById('tickerContent').innerHTML = doubled.join('');
+  const items = cards.map(c => {
+    const pct = parseFloat(avgChg(c));
+    const cls = pct > 0.3 ? 't-up' : pct < -0.3 ? 't-dn' : 't-fl';
+    const arr = pct > 0.3 ? '▲' : pct < -0.3 ? '▼' : '→';
+    return `<div class="t-item"><span class="t-name">${c.name}</span> ${yen(lowest(c))} <span class="${cls}">${arr}${Math.abs(pct)}%</span></div>`;
+  });
+  document.getElementById('tickerEl').innerHTML = [...items,...items].join('');
 }
 
-// ═══════════════════════════════════════════════════════════════
-//  Clock & Update
-// ═══════════════════════════════════════════════════════════════
-
-function updateClock() {
-  const now = new Date();
-  const s = now.toLocaleTimeString('ja-JP', { hour12: false });
-  document.getElementById('clockDisplay').textContent = s;
-  document.getElementById('lastUpdate').textContent = s;
+/* ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+   ⑪ 時計 & ライブシミュレーション
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ */
+function tick() {
+  const t = new Date().toLocaleTimeString('ja-JP',{hour12:false});
+  document.getElementById('clockEl').textContent  = t;
+  document.getElementById('updateEl').textContent = t;
 }
 
-// Simulate live price updates
-function simulateUpdates() {
-  const allGames = Object.keys(CARD_DATA);
-  const game = allGames[Math.floor(Math.random() * allGames.length)];
-  const cards = CARD_DATA[game].cards;
-  if (!cards.length) return;
+function simulateLive() {
   const card = cards[Math.floor(Math.random() * cards.length)];
-  const platforms = ['mercari', 'yahoo', 'shop'];
-  const platform = platforms[Math.floor(Math.random() * platforms.length)];
+  const keys = ['mercari','yahoo','shop'];
+  const key  = keys[Math.floor(Math.random() * 3)];
+  const old  = card.prices[key].c;
   const delta = (Math.random() - 0.5) * 0.06;
-  const old = card.prices[platform].current;
-  card.prices[platform].prev = old;
-  card.prices[platform].current = Math.max(100, Math.round(old * (1 + delta)));
-  if (game === currentGame) renderCards();
+  card.prices[key].p = old;
+  card.prices[key].c = Math.max(100, Math.round(old * (1 + delta)));
+  if (card.game === state.game) render();
 }
 
-// ═══════════════════════════════════════════════════════════════
-//  Init
-// ═══════════════════════════════════════════════════════════════
+/* ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+   ⑫ トースト
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ */
+function toast(msg) {
+  const el = document.getElementById('toastEl');
+  el.textContent = msg;
+  el.classList.add('show');
+  setTimeout(() => el.classList.remove('show'), 3500);
+}
 
-renderCards();
-buildTicker();
-updateClock();
-setInterval(updateClock, 1000);
-setInterval(simulateUpdates, 5000); // simulate live updates every 5s
+/* ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+   ⑬ 初期化
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ */
+render();                                   // ← カードを最初に描画
+buildTicker();                              // ← ティッカー生成
+tick();                                     // ← 時計即時表示
+setInterval(tick,         1000);            // ← 毎秒更新
+setInterval(simulateLive, 5000);            // ← 5秒ごとライブ価格シミュレーション
 </script>
 </body>
 </html>
