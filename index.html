@@ -27,17 +27,154 @@
 <!-- 構造化データ（JSON-LD） -->
 <script type="application/ld+json">
 {
-  "@context": "https://schema.org",
-  "@type": "WebSite",
-  "name": "CardRadar",
-  "url": "https://public-azure-six.vercel.app/",
-  "description": "トレーディングカード最安値比較サービス",
-  "potentialAction": {
-    "@type": "SearchAction",
-    "target": "https://public-azure-six.vercel.app/?q={search_term_string}",
-    "query-input": "required name=search_term_string"
-  }
+ "use strict";
+
+// 1. 状態管理（現在の表示データや設定を保持）
+let currentGame = "pokemon";
+let currentSort = "price";
+let searchQuery = "";
+
+// 2. 初期化処理
+window.addEventListener('DOMContentLoaded', () => {
+  updateClock();
+  setInterval(updateClock, 1000);
+  initTicker();
+  updateView(); // 初回表示
+});
+
+// 3. 検索処理 (inputイベントでリアルタイムに実行)
+function onSearch() {
+  searchQuery = document.getElementById('searchEl').value.toLowerCase();
+  updateView();
 }
+
+// 4. ゲーム切り替え
+function switchGame(btn) {
+  // タブの見た目を更新
+  document.querySelectorAll('.tab').forEach(t => {
+    t.classList.remove('tc', 'tp', 'ty', 'tv', 'on');
+    t.setAttribute('aria-selected', 'false');
+  });
+  
+  const game = btn.dataset.game;
+  currentGame = game;
+  
+  // ゲームごとに色を変える（元のCSSクラスを活用）
+  const colorClass = game === 'pokemon' ? 'tc' : (game === 'onepiece' ? 'tp' : 'ty');
+  btn.classList.add(colorClass);
+  btn.setAttribute('aria-selected', 'true');
+  
+  document.getElementById('gameLabelEl').textContent = btn.textContent.replace(/^[^\s]+\s/, "");
+  updateView();
+}
+
+// 5. ソート切り替え
+function setSort(type, btn) {
+  currentSort = type;
+  document.querySelectorAll('.sort').forEach(s => s.classList.remove('on'));
+  btn.classList.add('on');
+  updateView();
+}
+
+// 6. メインの描画ロジック
+function updateView() {
+  const gridEl = document.getElementById('gridEl');
+  
+  // フィルタリング（ゲーム種別 ＋ 検索ワード）
+  let filtered = cardData.filter(c => {
+    const isGameMatch = c.game === currentGame;
+    const isSearchMatch = c.name.toLowerCase().includes(searchQuery) || 
+                          c.code.toLowerCase().includes(searchQuery) ||
+                          c.set.toLowerCase().includes(searchQuery);
+    return isGameMatch && isSearchMatch;
+  });
+
+  // ソート処理
+  filtered.sort((a, b) => {
+    const getMin = (p) => Math.min(p.mercari.c, p.yahoo.c, p.shop.c);
+    if (currentSort === 'price') return getMin(a) - getMin(b);
+    if (currentSort === 'new') return b.id.localeCompare(a.id); // IDの降順を新着とする例
+    return 0;
+  });
+
+  // HTML生成
+  gridEl.innerHTML = filtered.map(card => {
+    const p = card.prices;
+    const lowPrice = Math.min(p.mercari.c, p.yahoo.c, p.shop.c);
+    
+    return `
+      <div class="pcard" role="listitem">
+        ${card.hot ? '<div class="hot">HOT</div>' : ''}
+        <div class="rbadge ${card.rc}">${card.rarity}</div>
+        <div class="thumb">${card.emoji}</div>
+        <div class="cbody">
+          <div class="nrow">
+            <div class="cname">${card.name}</div>
+          </div>
+          <div class="ccode">${card.code}</div>
+          <div class="cset">${card.set}</div>
+          
+          <div class="low-block">
+            <div>
+              <div class="low-lbl">LOWEST</div>
+              <div class="low-price">¥${lowPrice.toLocaleString()}</div>
+            </div>
+          </div>
+
+          <div class="prow">
+            <div class="pcell ${p.mercari.c === lowPrice ? 'lo' : ''}">
+              <div class="psite">MERCARI</div>
+              <div class="pval">¥${p.mercari.c.toLocaleString()}</div>
+            </div>
+            <div class="pcell ${p.yahoo.c === lowPrice ? 'lo' : ''}">
+              <div class="psite">YAHOO</div>
+              <div class="pval">¥${p.yahoo.c.toLocaleString()}</div>
+            </div>
+            <div class="pcell ${p.shop.c === lowPrice ? 'lo' : ''}">
+              <div class="psite">SHOP</div>
+              <div class="pval">¥${p.shop.c.toLocaleString()}</div>
+            </div>
+          </div>
+
+          <div class="action-row">
+            <button class="alert-btn" onclick="openAlertModal('${card.name}')">SET ALERT</button>
+          </div>
+        </div>
+      </div>
+    `;
+  }).join('');
+
+  document.getElementById('countEl').textContent = `${filtered.length}件`;
+  document.getElementById('updateEl').textContent = new Date().toLocaleTimeString();
+}
+
+// 補助機能（時計・ティッカー）
+function updateClock() {
+  const now = new Date();
+  document.getElementById('clockEl').textContent = now.toLocaleString('en-US', { hour12: false });
+}
+
+function initTicker() {
+  const tickerEl = document.getElementById('tickerEl');
+  const items = cardData.slice(0, 10).map(c => `
+    <span class="ti">${c.name} <span class="n">¥${c.prices.mercari.c.toLocaleString()}</span> 
+    <span class="${c.prices.mercari.c > c.prices.mercari.p ? 'up' : 'dn'}">
+      ${c.prices.mercari.c > c.prices.mercari.p ? '▲' : '▼'}
+    </span></span>
+  `).join('');
+  tickerEl.innerHTML = items + items; // ループ用に2倍
+}
+
+// モーダル制御（簡易版）
+function openAlertModal(name) {
+  const overlay = document.getElementById('alertOverlay');
+  document.getElementById('alertSubEl').textContent = name ? `${name} の通知設定` : '新規価格アラート';
+  overlay.classList.add('open');
+}
+
+function closeModal(id) {
+  document.getElementById(id).classList.remove('open');
+} 
 </script>
 
 <script src="https://cdn.tailwindcss.com"></script>
